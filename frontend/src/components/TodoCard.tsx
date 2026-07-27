@@ -133,7 +133,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
               marginBottom: '14px',
               display: '-webkit-box',
               WebkitLineClamp: 2,
-              WebkitBoxOrient: 'orient',
+              WebkitBoxOrient: 'vertical' as any,
               overflow: 'hidden',
               lineHeight: 1.5,
             }}
