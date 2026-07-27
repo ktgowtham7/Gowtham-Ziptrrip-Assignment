@@ -1,0 +1,74 @@
+### Health Check
+GET http://localhost:5000/api/health
+
+### Get Summary Statistics
+GET http://localhost:5000/api/todos/stats/summary
+
+### Get Todos List (All)
+GET http://localhost:5000/api/todos
+
+### Get Todos List with Filters & Search
+GET http://localhost:5000/api/todos?search=ziptrrip&status=in_progress&priority=urgent&sortBy=dueDate&order=asc&page=1&limit=5
+
+### Create New Todo
+# @name createTodo
+POST http://localhost:5000/api/todos
+Content-Type: application/json
+
+{
+  "title": "Complete Ziptrrip Assignment Documentation",
+  "description": "Write comprehensive README.md, DOCUMENTATION.md, and API.md files.",
+  "status": "pending",
+  "priority": "high",
+  "category": "Work",
+  "dueDate": "2026-08-02T12:00:00.000Z",
+  "tags": ["documentation", "ziptrrip"],
+  "subtasks": [
+    { "title": "Create architecture diagram", "completed": false },
+    { "title": "Add API response samples", "completed": false }
+  ]
+}
+
+### Get Single Todo by ID
+GET http://localhost:5000/api/todos/YOUR_TODO_ID_HERE
+
+### Update Todo
+PUT http://localhost:5000/api/todos/YOUR_TODO_ID_HERE
+Content-Type: application/json
+
+{
+  "title": "Complete Ziptrrip Assignment Documentation (In Progress)",
+  "status": "in_progress",
+  "priority": "urgent"
+}
+
+### Quick Status Patch
+PATCH http://localhost:5000/api/todos/YOUR_TODO_ID_HERE/status
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+### Add Subtask to Todo
+POST http://localhost:5000/api/todos/YOUR_TODO_ID_HERE/subtasks
+Content-Type: application/json
+
+{
+  "title": "Review final pull request",
+  "completed": false
+}
+
+### Toggle/Update Subtask
+PATCH http://localhost:5000/api/todos/subtasks/YOUR_SUBTASK_ID_HERE
+Content-Type: application/json
+
+{
+  "completed": true
+}
+
+### Delete Subtask
+DELETE http://localhost:5000/api/todos/subtasks/YOUR_SUBTASK_ID_HERE
+
+### Delete Todo
+DELETE http://localhost:5000/api/todos/YOUR_TODO_ID_HERE
