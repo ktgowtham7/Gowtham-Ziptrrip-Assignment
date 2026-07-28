@@ -1,53 +1,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-primary: #0c0d10;
-  --bg-secondary: #121318;
-  --bg-card: #14161d;
-  --bg-card-hover: #1b1e27;
-  --bg-input: #0f1015;
-  --border-color: #232631;
-  --border-hover: #373b4d;
+  --bg-primary: #09090b;
+  --bg-card: #121215;
+  --bg-card-hover: #18181b;
+  --bg-input: #121215;
+  --border-color: #27272a;
+  --border-hover: #3f3f46;
   
-  --text-main: #f4f5f7;
-  --text-muted: #9499ad;
-  --text-subtle: #616678;
+  --text-main: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-subtle: #71717a;
 
   --accent-primary: #ffffff;
-  --accent-primary-text: #0c0d10;
-  --accent-blue: #3b82f6;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  --accent-purple: #a855f7;
+  --accent-primary-text: #09090b;
 
-  --radius-xl: 14px;
-  --radius-lg: 10px;
+  --radius-lg: 8px;
   --radius-md: 6px;
   --radius-sm: 4px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  --bg-primary: #fcfcfd;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
-  --bg-input: #f8fafc;
-  --border-color: #e2e8f0;
-  --border-hover: #cbd5e1;
+  --bg-card-hover: #f4f4f5;
+  --bg-input: #ffffff;
+  --border-color: #e4e4e7;
+  --border-hover: #d4d4d8;
   
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-subtle: #94a3b8;
+  --text-main: #09090b;
+  --text-muted: #71717a;
+  --text-subtle: #a1a1aa;
 
-  --accent-primary: #0f172a;
+  --accent-primary: #09090b;
   --accent-primary-text: #ffffff;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
 }
 
 * {
@@ -61,7 +51,7 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-main);
   min-height: 100vh;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -76,71 +66,44 @@ a {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .card:hover {
   border-color: var(--border-hover);
 }
 
-/* Badges */
+/* Unified Clean Neutral Badges */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  padding: 3px 8px;
   font-size: 0.725rem;
-  font-weight: 600;
-  border-radius: 9999px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
   letter-spacing: 0.01em;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  text-transform: capitalize;
 }
 
-.badge-pending {
-  background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-
-.badge-in_progress {
-  background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-}
-
-.badge-completed {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-.badge-priority-low {
+.badge-pending,
+.badge-in_progress,
+.badge-completed,
+.badge-priority-low,
+.badge-priority-medium,
+.badge-priority-high,
+.badge-priority-urgent {
   background: var(--bg-input);
   color: var(--text-muted);
   border: 1px solid var(--border-color);
 }
 
-.badge-priority-medium {
-  background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-}
-
-.badge-priority-high {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-
-.badge-priority-urgent {
-  background: rgba(244, 63, 94, 0.12);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
-}
-
 /* Controls */
 .input-control {
   width: 100%;
-  padding: 9px 13px;
+  padding: 8px 12px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -148,12 +111,11 @@ a {
   font-family: inherit;
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
 .input-control:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  border-color: var(--text-muted);
 }
 
 .input-control::placeholder {
@@ -165,7 +127,7 @@ a {
   background: var(--accent-primary);
   color: var(--accent-primary-text);
   font-family: inherit;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.85rem;
   padding: 8px 16px;
   border-radius: var(--radius-md);
@@ -175,11 +137,11 @@ a {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: opacity 0.15s ease, transform 0.1s ease;
+  transition: opacity 0.15s ease;
 }
 
 .btn-primary:hover {
-  opacity: 0.92;
+  opacity: 0.9;
 }
 
 .btn-secondary {
@@ -205,31 +167,31 @@ a {
 }
 
 .btn-danger {
-  background: rgba(244, 63, 94, 0.1);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.2);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
   font-family: inherit;
   font-weight: 500;
-  font-size: 0.825rem;
-  padding: 7px 12px;
+  font-size: 0.85rem;
+  padding: 8px 14px;
   border-radius: var(--radius-md);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-danger:hover {
-  background: rgba(244, 63, 94, 0.2);
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  color: var(--text-main);
 }
 
 /* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -242,11 +204,11 @@ a {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 560px;
+  max-width: 540px;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 28px;
-  box-shadow: var(--shadow-md);
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .spin {

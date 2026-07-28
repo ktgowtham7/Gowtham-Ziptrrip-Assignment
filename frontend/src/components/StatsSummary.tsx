@@ -23,7 +23,7 @@ export const StatsSummary: React.FC<StatsSummaryProps> = ({ stats }) => {
         <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '6px' }}>
           Total Tasks
         </div>
-        <div style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em' }}>{stats.total}</div>
+        <div style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>{stats.total}</div>
         <div style={{ fontSize: '0.725rem', color: 'var(--text-subtle)', marginTop: '4px' }}>Registered todos</div>
       </div>
 
@@ -31,7 +31,7 @@ export const StatsSummary: React.FC<StatsSummaryProps> = ({ stats }) => {
         <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '6px' }}>
           Completed
         </div>
-        <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#34d399', letterSpacing: '-0.02em' }}>{stats.completed}</div>
+        <div style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>{stats.completed}</div>
         <div style={{ fontSize: '0.725rem', color: 'var(--text-subtle)', marginTop: '4px' }}>
           {completionRate}% complete
         </div>
@@ -41,7 +41,7 @@ export const StatsSummary: React.FC<StatsSummaryProps> = ({ stats }) => {
         <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '6px' }}>
           Active
         </div>
-        <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fbbf24', letterSpacing: '-0.02em' }}>
+        <div style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
           {stats.pending + stats.inProgress}
         </div>
         <div style={{ fontSize: '0.725rem', color: 'var(--text-subtle)', marginTop: '4px' }}>
@@ -53,8 +53,8 @@ export const StatsSummary: React.FC<StatsSummaryProps> = ({ stats }) => {
         <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '6px' }}>
           Overdue
         </div>
-        <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fb7185', letterSpacing: '-0.02em' }}>{stats.overdue}</div>
-        <div style={{ fontSize: '0.725rem', color: 'var(--text-subtle)', marginTop: '4px' }}>Requires attention</div>
+        <div style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>{stats.overdue}</div>
+        <div style={{ fontSize: '0.725rem', color: 'var(--text-subtle)', marginTop: '4px' }}>Past due date</div>
       </div>
     </div>
   );

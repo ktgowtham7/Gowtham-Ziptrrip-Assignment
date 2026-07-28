@@ -38,7 +38,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
         flexDirection: 'column',
         justifyContent: 'space-between',
         position: 'relative',
-        opacity: isCompleted ? 0.78 : 1,
+        opacity: isCompleted ? 0.75 : 1,
       }}
     >
       <div>
@@ -49,29 +49,19 @@ export const TodoCard: React.FC<TodoCardProps> = ({
               type="checkbox"
               checked={isCompleted}
               onChange={() => onStatusToggle(todo.id, todo.status)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#34d399' }}
+              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--text-main)' }}
               title={`Mark as ${isCompleted ? 'Pending' : 'Completed'}`}
             />
-            <span className={`badge badge-${todo.status}`}>
+            <span className="badge">
               {todo.status.replace('_', ' ')}
             </span>
           </div>
 
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <span className={`badge badge-priority-${todo.priority}`}>
+            <span className="badge">
               {todo.priority}
             </span>
-            <span
-              style={{
-                fontSize: '0.725rem',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                background: 'var(--bg-input)',
-                color: 'var(--text-muted)',
-                fontWeight: 500,
-                border: '1px solid var(--border-color)',
-              }}
-            >
+            <span className="badge">
               {todo.category}
             </span>
           </div>
@@ -118,12 +108,12 @@ export const TodoCard: React.FC<TodoCardProps> = ({
               <span>Subtasks</span>
               <span>{completedSubtasks}/{totalSubtasks} ({subtaskProgress}%)</span>
             </div>
-            <div style={{ height: '4px', width: '100%', background: 'var(--bg-input)', borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ height: '4px', width: '100%', background: 'var(--border-color)', borderRadius: '2px', overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
                   width: `${subtaskProgress}%`,
-                  background: subtaskProgress === 100 ? '#34d399' : '#3b82f6',
+                  background: 'var(--text-main)',
                   transition: 'width 0.2s ease',
                 }}
               />
@@ -147,11 +137,11 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           {formattedDueDate ? `Due ${formattedDueDate}` : 'No due date'}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <button
             onClick={() => onEdit(todo)}
             className="btn-secondary"
-            style={{ padding: '5px 10px', fontSize: '0.775rem' }}
+            style={{ padding: '4px 10px', fontSize: '0.775rem' }}
           >
             Edit
           </button>
@@ -159,7 +149,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           <button
             onClick={() => onDelete(todo.id)}
             className="btn-danger"
-            style={{ padding: '5px 10px', fontSize: '0.775rem' }}
+            style={{ padding: '4px 10px', fontSize: '0.775rem' }}
           >
             Delete
           </button>
@@ -167,7 +157,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           <Link
             href={`/todo?id=${todo.id}`}
             className="btn-secondary"
-            style={{ padding: '5px 12px', fontSize: '0.775rem', color: '#60a5fa' }}
+            style={{ padding: '4px 10px', fontSize: '0.775rem' }}
           >
             Details →
           </Link>
