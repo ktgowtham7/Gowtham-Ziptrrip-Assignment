@@ -60,21 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
 
         {/* Right Navigation & Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Link
-            href="/todos"
-            style={{
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              padding: '6px 14px',
-              borderRadius: '6px',
-              background: isTodosActive ? 'var(--bg-input)' : 'transparent',
-              color: isTodosActive ? 'var(--text-main)' : 'var(--text-muted)',
-              border: isTodosActive ? '1px solid var(--border-color)' : '1px solid transparent',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            Overview
-          </Link>
+          {/* Removed Overview Button */}
 
           {onOpenCreateModal && (
             <button onClick={onOpenCreateModal} className="btn-primary" style={{ padding: '7px 15px', fontSize: '0.825rem' }}>

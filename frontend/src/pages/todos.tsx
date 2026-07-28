@@ -1,26 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Head from 'next/head';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
 import { StatsSummary } from '../components/StatsSummary';
 import { FilterBar } from '../components/FilterBar';
 import { TodoCard } from '../components/TodoCard';
 import { TodoFormModal } from '../components/TodoFormModal';
 import { todoApi } from '../services/api';
-import { CreateTodoInput, Todo, TodoQueryParams, TodoSummaryStats } from '../types/todo';
+import { CreateTodoInput, Todo, TodoQueryParams } from '../types/todo';
 
 export default function TodosPage() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [stats, setStats] = useState<TodoSummaryStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const [pagination, setPagination] = useState({
-    page: 1,
-    totalPages: 1,
-    total: 0,
-    limit: 9,
-  });
-
+  const queryClient = useQueryClient();
+  
   const [filters, setFilters] = useState<TodoQueryParams>({
     search: '',
     status: '',
@@ -34,46 +26,66 @@ export default function TodosPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
 
-  const fetchTodos = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await todoApi.getTodos(filters);
-      setTodos(res.data);
-      setPagination(res.pagination);
+  const { data: todosData, isLoading: isLoadingTodos, error: todosError } = useQuery({
+    queryKey: ['todos', filters],
+    queryFn: () => todoApi.getTodos(filters),
+  });
 
-      // Fetch Stats
-      const statsRes = await todoApi.getSummaryStats();
-      setStats(statsRes);
-      if (statsRes.byCategory) {
-        setCategories(Object.keys(statsRes.byCategory));
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch todos:', err);
-      setError('Could not connect to backend server. Make sure backend is running on http://localhost:5000');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  const { data: statsData } = useQuery({
+    queryKey: ['stats'],
+    queryFn: () => todoApi.getSummaryStats(),
+  });
 
-  useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string, status: 'pending' | 'in_progress' | 'completed' }) => todoApi.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast.success('Status updated');
+    },
+    onError: () => toast.error('Failed to update status'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => todoApi.deleteTodo(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast.success('Todo deleted successfully');
+    },
+    onError: () => toast.error('Failed to delete todo'),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (input: CreateTodoInput) => todoApi.createTodo(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast.success('Todo created successfully');
+      setIsModalOpen(false);
+    },
+    onError: () => toast.error('Failed to create todo'),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string, input: CreateTodoInput }) => todoApi.updateTodo(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast.success('Todo updated successfully');
+      setIsModalOpen(false);
+    },
+    onError: () => toast.error('Failed to update todo'),
+  });
 
   const handleFilterChange = (newFilters: Partial<TodoQueryParams>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
+    setFilters((prev) => ({ ...prev, ...newFilters, page: newFilters.page ?? 1 }));
   };
 
-  const handleStatusToggle = async (id: string, currentStatus: string) => {
+  const handleStatusToggle = (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
-    try {
-      await todoApi.updateStatus(id, nextStatus);
-      fetchTodos();
-    } catch (err) {
-      console.error('Failed to toggle status:', err);
-    }
+    toggleStatusMutation.mutate({ id, status: nextStatus });
   };
 
   const handleOpenCreateModal = () => {
@@ -86,88 +98,88 @@ export default function TodosPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTodo = async (id: string) => {
+  const handleDeleteTodo = (id: string) => {
     if (confirm('Are you sure you want to delete this todo item?')) {
-      try {
-        await todoApi.deleteTodo(id);
-        fetchTodos();
-      } catch (err) {
-        console.error('Failed to delete todo:', err);
-      }
+      deleteMutation.mutate(id);
     }
   };
 
-  const handleFormSubmit = async (input: CreateTodoInput, editId?: string) => {
+  const handleFormSubmit = (input: CreateTodoInput, editId?: string) => {
     if (editId) {
-      await todoApi.updateTodo(editId, input);
+      updateMutation.mutate({ id: editId, input });
     } else {
-      await todoApi.createTodo(input);
+      createMutation.mutate(input);
     }
-    fetchTodos();
   };
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['todos'] }),
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+    ]);
+    toast.success('Data refreshed');
+  };
+
+  const todos = todosData?.data || [];
+  const pagination = todosData?.pagination || { page: 1, totalPages: 1, total: 0, limit: 9 };
+  const categories = statsData?.byCategory ? Object.keys(statsData.byCategory) : [];
 
   return (
     <>
       <Head>
         <title>Todo Application</title>
-        <meta name="description" content="Todo Application" />
+        <meta name="description" content="Manage your tasks effectively" />
       </Head>
 
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="min-h-screen flex flex-col bg-background text-textMain">
         <Navbar onOpenCreateModal={handleOpenCreateModal} />
 
-        <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '32px 24px', flex: 1 }}>
-          {/* Header Section */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <main className="max-w-7xl w-full mx-auto px-6 py-8 flex-1">
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-                Todos Overview
-              </h1>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
-                Manage, filter, and track your tasks and subtasks.
-              </p>
+              <h1 className="text-3xl font-extrabold tracking-tight">Todos Overview</h1>
+              <p className="text-textMuted text-sm mt-1">Manage, filter, and track your tasks and subtasks.</p>
             </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => fetchTodos()} className="btn-secondary" title="Refresh list">
+            <div className="flex gap-3">
+              <button onClick={handleRefresh} className="btn-secondary transition-transform hover:scale-105 active:scale-95" title="Refresh list">
                 Refresh
               </button>
-              <button onClick={handleOpenCreateModal} className="btn-primary">
+              <button onClick={handleOpenCreateModal} className="btn-primary transition-transform hover:scale-105 active:scale-95">
                 + New Todo
               </button>
             </div>
           </div>
 
-          {/* Stats Summary Banner */}
-          <StatsSummary stats={stats} />
+          <StatsSummary stats={statsData || null} />
 
-          {/* Search and Filters */}
           <FilterBar filters={filters} onChange={handleFilterChange} categories={categories} />
 
-          {/* Error Notice */}
-          {error && (
-            <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', marginBottom: '24px', fontSize: '0.9rem' }}>
-              ⚠️ {error}
+          {todosError && (
+            <div className="p-4 rounded-xl bg-rose-500/10 text-rose-500 mb-6 text-sm flex items-center gap-2">
+              ⚠️ Could not connect to backend server.
             </div>
           )}
 
-          {/* Todo Cards Grid */}
-          {loading ? (
-            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <div>Loading todos...</div>
+          {isLoadingTodos ? (
+            <div className="py-16 text-center text-textMuted flex flex-col items-center justify-center space-y-4">
+              <div className="spin rounded-full h-8 w-8 border-b-2 border-accent-blue"></div>
+              <p>Loading your tasks...</p>
             </div>
           ) : todos.length === 0 ? (
-            <div className="card" style={{ padding: '60px', textAlign: 'center' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '8px' }}>No Todos Found</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
-                No task matched your search filter criteria or database is empty.
-              </p>
+            <div className="card p-16 text-center shadow-lg rounded-2xl flex flex-col items-center">
+              <div className="w-20 h-20 bg-cardHover rounded-full flex items-center justify-center mb-4">
+                <svg className="w-10 h-10 text-textMuted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No Todos Found</h3>
+              <p className="text-textMuted text-sm mb-6 max-w-sm">No task matched your search filter criteria or your database is empty. Get started by creating one!</p>
               <button onClick={handleOpenCreateModal} className="btn-primary">
                 + Create Your First Todo
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {todos.map((todo) => (
                 <TodoCard
                   key={todo.id}
@@ -180,27 +192,22 @@ export default function TodosPage() {
             </div>
           )}
 
-          {/* Pagination Controls */}
           {pagination.totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '24px' }}>
+            <div className="flex justify-center items-center gap-4 mt-8">
               <button
                 disabled={pagination.page <= 1}
                 onClick={() => handleFilterChange({ page: pagination.page - 1 })}
-                className="btn-secondary"
-                style={{ padding: '8px 14px', opacity: pagination.page <= 1 ? 0.5 : 1 }}
+                className="btn-secondary px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
-
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+              <span className="text-sm text-textMuted font-medium bg-card px-4 py-2 rounded-full border border-borderBase shadow-sm">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
-
               <button
                 disabled={pagination.page >= pagination.totalPages}
                 onClick={() => handleFilterChange({ page: pagination.page + 1 })}
-                className="btn-secondary"
-                style={{ padding: '8px 14px', opacity: pagination.page >= pagination.totalPages ? 0.5 : 1 }}
+                className="btn-secondary px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -208,7 +215,6 @@ export default function TodosPage() {
           )}
         </main>
 
-        {/* Modal for Create/Edit */}
         <TodoFormModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

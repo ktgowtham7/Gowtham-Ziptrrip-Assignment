@@ -23,22 +23,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
   };
 
   return (
-    <div
-      className="card"
-      style={{
-        padding: '16px 22px',
-        marginBottom: '28px',
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '12px',
-        alignItems: 'center',
-      }}
-    >
+    <div className="card px-5 py-4 mb-8 flex flex-wrap gap-4 items-center bg-card border border-borderBase shadow-sm rounded-xl">
       {/* Search Input */}
-      <div style={{ flex: '1 1 260px' }}>
+      <div className="flex-[1_1_260px]">
         <input
           type="text"
-          className="input-control"
+          className="input-control w-full"
           placeholder="Filter tasks by title, description..."
           value={filters.search || ''}
           onChange={(e) => onChange({ search: e.target.value, page: 1 })}
@@ -46,9 +36,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
       </div>
 
       {/* Status Filter */}
-      <div style={{ minWidth: '140px' }}>
+      <div className="min-w-[140px]">
         <select
-          className="input-control"
+          className="input-control w-full"
           value={filters.status || ''}
           onChange={(e) => onChange({ status: (e.target.value as TodoStatus) || undefined, page: 1 })}
         >
@@ -60,9 +50,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
       </div>
 
       {/* Priority Filter */}
-      <div style={{ minWidth: '140px' }}>
+      <div className="min-w-[140px]">
         <select
-          className="input-control"
+          className="input-control w-full"
           value={filters.priority || ''}
           onChange={(e) => onChange({ priority: (e.target.value as TodoPriority) || undefined, page: 1 })}
         >
@@ -76,9 +66,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
 
       {/* Category Filter */}
       {categories.length > 0 && (
-        <div style={{ minWidth: '140px' }}>
+        <div className="min-w-[140px]">
           <select
-            className="input-control"
+            className="input-control w-full"
             value={filters.category || ''}
             onChange={(e) => onChange({ category: e.target.value || undefined, page: 1 })}
           >
@@ -93,9 +83,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
       )}
 
       {/* Sort Field & Order */}
-      <div style={{ display: 'flex', gap: '8px', minWidth: '180px' }}>
+      <div className="flex gap-2 min-w-[180px]">
         <select
-          className="input-control"
+          className="input-control w-full"
           value={filters.sortBy || 'createdAt'}
           onChange={(e) => onChange({ sortBy: e.target.value as any })}
         >
@@ -106,8 +96,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
         </select>
 
         <button
-          className="btn-secondary"
-          style={{ padding: '9px 14px' }}
+          className="btn-secondary px-3 py-2 flex items-center justify-center font-bold"
           onClick={() => onChange({ order: filters.order === 'asc' ? 'desc' : 'asc' })}
           title={`Order: ${filters.order === 'asc' ? 'Ascending' : 'Descending'}`}
         >
@@ -119,8 +108,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
       {hasActiveFilters && (
         <button
           onClick={clearFilters}
-          className="btn-secondary"
-          style={{ fontSize: '0.825rem', color: '#fb7185', borderColor: 'rgba(244, 63, 94, 0.3)' }}
+          className="btn-secondary text-rose-500 border-rose-500/30 hover:bg-rose-500/10 px-3 py-2 text-sm"
         >
           Reset
         </button>

@@ -1,5 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { CreateTodoInput, Todo, TodoPriority, TodoStatus } from '../types/todo';
+
+const todoSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(100),
+  description: z.string().optional(),
+  status: z.enum(['pending', 'in_progress', 'completed']),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']),
+  category: z.string().min(1, 'Category is required'),
+  dueDate: z.string().optional(),
+  subtasks: z.array(z.object({
+    title: z.string().min(1, 'Subtask title is required'),
+    completed: z.boolean().default(false)
+  })).optional().default([]),
+});
+
+type TodoFormValues = z.infer<typeof todoSchema>;
 
 interface TodoFormModalProps {
   isOpen: boolean;
@@ -14,79 +32,66 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
   onSubmit,
   initialTodo,
 }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<TodoStatus>('pending');
-  const [priority, setPriority] = useState<TodoPriority>('medium');
-  const [category, setCategory] = useState('Work');
-  const [dueDate, setDueDate] = useState('');
-  const [subtasks, setSubtasks] = useState<Array<{ title: string; completed: boolean }>>([]);
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const { register, control, handleSubmit, reset, formState: { errors } } = useForm<TodoFormValues>({
+    resolver: zodResolver(todoSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      status: 'pending',
+      priority: 'medium',
+      category: 'Work',
+      dueDate: '',
+      subtasks: [],
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'subtasks'
+  });
+
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+
   useEffect(() => {
     if (initialTodo) {
-      setTitle(initialTodo.title);
-      setDescription(initialTodo.description || '');
-      setStatus(initialTodo.status);
-      setPriority(initialTodo.priority);
-      setCategory(initialTodo.category || 'Work');
-      setDueDate(initialTodo.dueDate ? initialTodo.dueDate.split('T')[0] : '');
-      setSubtasks(initialTodo.subtasks ? initialTodo.subtasks.map((s) => ({ title: s.title, completed: s.completed })) : []);
+      reset({
+        title: initialTodo.title,
+        description: initialTodo.description || '',
+        status: initialTodo.status,
+        priority: initialTodo.priority,
+        category: initialTodo.category || 'Work',
+        dueDate: initialTodo.dueDate ? initialTodo.dueDate.split('T')[0] : '',
+        subtasks: initialTodo.subtasks ? initialTodo.subtasks.map(s => ({ title: s.title, completed: s.completed })) : [],
+      });
     } else {
-      setTitle('');
-      setDescription('');
-      setStatus('pending');
-      setPriority('medium');
-      setCategory('Work');
-      setDueDate('');
-      setSubtasks([]);
+      reset({
+        title: '',
+        description: '',
+        status: 'pending',
+        priority: 'medium',
+        category: 'Work',
+        dueDate: '',
+        subtasks: [],
+      });
     }
     setError('');
-  }, [initialTodo, isOpen]);
+  }, [initialTodo, isOpen, reset]);
 
   if (!isOpen) return null;
 
-  const handleAddSubtask = () => {
-    if (newSubtaskTitle.trim()) {
-      setSubtasks([...subtasks, { title: newSubtaskTitle.trim(), completed: false }]);
-      setNewSubtaskTitle('');
-    }
-  };
-
-  const handleRemoveSubtask = (index: number) => {
-    setSubtasks(subtasks.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) {
-      setError('Title is required');
-      return;
-    }
-
+  const handleFormSubmit = async (data: TodoFormValues) => {
     setLoading(true);
     setError('');
-
     try {
-      const formattedDueDate = dueDate ? new Date(dueDate).toISOString() : null;
-
-      await onSubmit(
-        {
-          title: title.trim(),
-          description: description.trim(),
-          status,
-          priority,
-          category: category.trim() || 'General',
-          dueDate: formattedDueDate,
-          tags: [],
-          subtasks,
-        },
-        initialTodo?.id
-      );
-
-      onClose();
+      const formattedDueDate = data.dueDate ? new Date(data.dueDate).toISOString() : null;
+      await onSubmit({
+        ...data,
+        dueDate: formattedDueDate,
+        tags: []
+      }, initialTodo?.id);
     } catch (err: any) {
       setError(err.response?.data?.error || err.message || 'Failed to save todo');
     } finally {
@@ -94,52 +99,57 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
     }
   };
 
+  const handleAddSubtask = () => {
+    if (newSubtaskTitle.trim()) {
+      append({ title: newSubtaskTitle.trim(), completed: false });
+      setNewSubtaskTitle('');
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 600 }}>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">
             {initialTodo ? 'Edit Todo' : 'New Todo'}
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem' }}>
+          <button onClick={onClose} className="text-textMuted hover:text-textMain text-xl transition-colors">
             ✕
           </button>
         </div>
 
         {error && (
-          <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', fontSize: '0.85rem', marginBottom: '16px' }}>
+          <div className="p-3 rounded-lg bg-rose-500/15 text-rose-500 text-sm mb-4">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4">
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Title *</label>
+            <label className="block text-sm font-semibold mb-1">Title *</label>
             <input
               type="text"
-              className="input-control"
+              className={`input-control ${errors.title ? 'border-rose-500 focus:border-rose-500 focus:shadow-[0_0_0_3px_rgba(244,63,94,0.15)]' : ''}`}
               placeholder="e.g. Complete Ziptrrip Tech Assignment"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
+              {...register('title')}
             />
+            {errors.title && <p className="text-rose-500 text-xs mt-1">{errors.title.message}</p>}
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Description</label>
+            <label className="block text-sm font-semibold mb-1">Description</label>
             <textarea
               className="input-control"
               rows={3}
               placeholder="Add details..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              {...register('description')}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Status</label>
-              <select className="input-control" value={status} onChange={(e) => setStatus(e.target.value as TodoStatus)}>
+              <label className="block text-sm font-semibold mb-1">Status</label>
+              <select className="input-control" {...register('status')}>
                 <option value="pending">Pending</option>
                 <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
@@ -147,8 +157,8 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Priority</label>
-              <select className="input-control" value={priority} onChange={(e) => setPriority(e.target.value as TodoPriority)}>
+              <label className="block text-sm font-semibold mb-1">Priority</label>
+              <select className="input-control" {...register('priority')}>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
@@ -157,33 +167,32 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Category</label>
+              <label className="block text-sm font-semibold mb-1">Category</label>
               <input
                 type="text"
-                className="input-control"
+                className={`input-control ${errors.category ? 'border-rose-500' : ''}`}
                 placeholder="Work, Personal..."
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                {...register('category')}
               />
+              {errors.category && <p className="text-rose-500 text-xs mt-1">{errors.category.message}</p>}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Due Date</label>
+              <label className="block text-sm font-semibold mb-1">Due Date</label>
               <input
                 type="date"
                 className="input-control"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                {...register('dueDate')}
               />
             </div>
           </div>
 
           {!initialTodo && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Subtasks</label>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <label className="block text-sm font-semibold mb-1">Subtasks</label>
+              <div className="flex gap-2 mb-2">
                 <input
                   type="text"
                   className="input-control"
@@ -202,12 +211,12 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 </button>
               </div>
 
-              {subtasks.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
-                  {subtasks.map((st, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '0.85rem' }}>
-                      <span>• {st.title}</span>
-                      <button type="button" onClick={() => handleRemoveSubtask(idx)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer' }}>
+              {fields.length > 0 && (
+                <div className="flex flex-col gap-2 mt-2 max-h-32 overflow-y-auto">
+                  {fields.map((field, idx) => (
+                    <div key={field.id} className="flex items-center justify-between p-2 bg-input border border-borderBase rounded-md text-sm">
+                      <span className="truncate">• {field.title}</span>
+                      <button type="button" onClick={() => remove(idx)} className="text-rose-500 hover:text-rose-400">
                         ✕
                       </button>
                     </div>
@@ -217,7 +226,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+          <div className="flex justify-end gap-3 mt-4">
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel
             </button>

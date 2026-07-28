@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { TodoModel, ITodo } from '../db/models/todo.model';
+import { dbAll, dbGet, dbRun } from '../db/sqlite';
 import {
   CreateTodoInput,
   SubTask,
@@ -10,27 +10,25 @@ import {
 } from '../types/todo';
 
 export class TodoRepository {
-  private formatTodo(doc: ITodo): Todo {
+  private formatTodo(row: any, subtasks: any[]): Todo {
     return {
-      id: doc.id,
-      title: doc.title,
-      description: doc.description || '',
-      status: doc.status,
-      priority: doc.priority,
-      category: doc.category || 'General',
-      dueDate: doc.dueDate || null,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      tags: doc.tags || [],
-      subtasks: doc.subtasks
-        ? doc.subtasks.map((st) => ({
-            id: st.id,
-            todoId: st.todoId,
-            title: st.title,
-            completed: Boolean(st.completed),
-            createdAt: st.createdAt,
-          }))
-        : [],
+      id: row.id,
+      title: row.title,
+      description: row.description || '',
+      status: row.status,
+      priority: row.priority,
+      category: row.category || 'General',
+      dueDate: row.dueDate || null,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      tags: row.tags ? JSON.parse(row.tags) : [],
+      subtasks: subtasks.map((st) => ({
+        id: st.id,
+        todoId: st.todoId,
+        title: st.title,
+        completed: Boolean(st.completed),
+        createdAt: st.createdAt,
+      })),
     };
   }
 
@@ -46,220 +44,235 @@ export class TodoRepository {
       limit = 10,
     } = params;
 
-    const query: any = {};
+    let whereClauses: string[] = [];
+    let queryParams: any[] = [];
 
     if (search && search.trim() !== '') {
-      const term = search.trim();
-      query.$or = [
-        { title: { $regex: term, $options: 'i' } },
-        { description: { $regex: term, $options: 'i' } },
-        { category: { $regex: term, $options: 'i' } },
-      ];
+      const term = `%${search.trim()}%`;
+      whereClauses.push(`(title LIKE ? OR description LIKE ? OR category LIKE ?)`);
+      queryParams.push(term, term, term);
     }
 
     if (status) {
-      query.status = status;
+      whereClauses.push(`status = ?`);
+      queryParams.push(status);
     }
 
     if (priority) {
-      query.priority = priority;
+      whereClauses.push(`priority = ?`);
+      queryParams.push(priority);
     }
 
     if (category) {
-      query.category = category;
+      whereClauses.push(`category = ?`);
+      queryParams.push(category);
     }
 
+    const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    
+    const countRow = await dbGet<{ total: number }>(`SELECT COUNT(*) as total FROM todos ${whereString}`, queryParams);
+    const total = countRow?.total || 0;
+    
     const allowedSortFields: Record<string, string> = {
       createdAt: 'createdAt',
       dueDate: 'dueDate',
       priority: 'priority',
       title: 'title',
     };
-
     const sortColumn = allowedSortFields[sortBy] || 'createdAt';
-    const sortDirection = order.toLowerCase() === 'asc' ? 1 : -1;
-
-    const total = await TodoModel.countDocuments(query);
+    const sortDirection = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
     const offset = (page - 1) * limit;
 
-    const docs = await TodoModel.find(query)
-      .sort({ [sortColumn]: sortDirection })
-      .skip(offset)
-      .limit(limit);
+    const rows = await dbAll(`SELECT * FROM todos ${whereString} ORDER BY ${sortColumn} ${sortDirection} LIMIT ? OFFSET ?`, [...queryParams, limit, offset]);
 
-    const todos = docs.map((doc) => this.formatTodo(doc));
+    const todos: Todo[] = [];
+    for (const row of rows) {
+      const subtasks = await dbAll(`SELECT * FROM subtasks WHERE todoId = ? ORDER BY createdAt ASC`, [row.id]);
+      todos.push(this.formatTodo(row, subtasks));
+    }
+
     const totalPages = Math.ceil(total / limit) || 1;
-
     return { todos, total, page, totalPages };
   }
 
   async findById(id: string): Promise<Todo | null> {
-    const doc = await TodoModel.findOne({ id });
-    if (!doc) return null;
-    return this.formatTodo(doc);
+    const row = await dbGet(`SELECT * FROM todos WHERE id = ?`, [id]);
+    if (!row) return null;
+    const subtasks = await dbAll(`SELECT * FROM subtasks WHERE todoId = ? ORDER BY createdAt ASC`, [id]);
+    return this.formatTodo(row, subtasks);
   }
 
   async create(input: CreateTodoInput): Promise<Todo> {
     const id = uuidv4();
     const now = new Date().toISOString();
+    
+    const tags = JSON.stringify(input.tags || []);
+    
+    await dbRun(
+      `INSERT INTO todos (id, title, description, status, priority, category, dueDate, createdAt, updatedAt, tags)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.title,
+        input.description || '',
+        input.status || 'pending',
+        input.priority || 'medium',
+        input.category || 'General',
+        input.dueDate || null,
+        now,
+        now,
+        tags
+      ]
+    );
 
-    const createdSubtasks: SubTask[] = [];
+    const createdSubtasks: any[] = [];
     if (input.subtasks && input.subtasks.length > 0) {
       for (const st of input.subtasks) {
-        createdSubtasks.push({
-          id: uuidv4(),
-          todoId: id,
-          title: st.title,
-          completed: Boolean(st.completed),
-          createdAt: now,
-        });
+        const stId = uuidv4();
+        await dbRun(
+          `INSERT INTO subtasks (id, todoId, title, completed, createdAt) VALUES (?, ?, ?, ?, ?)`,
+          [stId, id, st.title, st.completed ? 1 : 0, now]
+        );
+        createdSubtasks.push({ id: stId, todoId: id, title: st.title, completed: st.completed ? 1 : 0, createdAt: now });
       }
     }
 
-    const newTodo = await TodoModel.create({
-      id,
-      title: input.title,
-      description: input.description || '',
-      status: input.status || 'pending',
-      priority: input.priority || 'medium',
-      category: input.category || 'General',
-      dueDate: input.dueDate || null,
-      createdAt: now,
-      updatedAt: now,
-      tags: input.tags || [],
-      subtasks: createdSubtasks,
-    });
-
-    return this.formatTodo(newTodo);
+    const row = await dbGet(`SELECT * FROM todos WHERE id = ?`, [id]);
+    return this.formatTodo(row, createdSubtasks);
   }
 
   async update(id: string, input: UpdateTodoInput): Promise<Todo | null> {
+    const row = await dbGet(`SELECT * FROM todos WHERE id = ?`, [id]);
+    if (!row) return null;
+
     const now = new Date().toISOString();
-    const updateData: any = { updatedAt: now };
+    let updateClauses: string[] = ['updatedAt = ?'];
+    let updateParams: any[] = [now];
 
-    if (input.title !== undefined) updateData.title = input.title;
-    if (input.description !== undefined) updateData.description = input.description;
-    if (input.status !== undefined) updateData.status = input.status;
-    if (input.priority !== undefined) updateData.priority = input.priority;
-    if (input.category !== undefined) updateData.category = input.category;
-    if (input.dueDate !== undefined) updateData.dueDate = input.dueDate;
-    if (input.tags !== undefined) updateData.tags = input.tags;
+    const fields = ['title', 'description', 'status', 'priority', 'category', 'dueDate'];
+    for (const field of fields) {
+      if ((input as any)[field] !== undefined) {
+        updateClauses.push(`${field} = ?`);
+        updateParams.push((input as any)[field]);
+      }
+    }
 
-    const updatedDoc = await TodoModel.findOneAndUpdate({ id }, { $set: updateData }, { new: true });
-    if (!updatedDoc) return null;
-    return this.formatTodo(updatedDoc);
+    if (input.tags !== undefined) {
+      updateClauses.push(`tags = ?`);
+      updateParams.push(JSON.stringify(input.tags));
+    }
+
+    updateParams.push(id);
+    await dbRun(`UPDATE todos SET ${updateClauses.join(', ')} WHERE id = ?`, updateParams);
+
+    return this.findById(id);
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await TodoModel.deleteOne({ id });
-    return result.deletedCount > 0;
+    const result = await dbRun(`DELETE FROM todos WHERE id = ?`, [id]);
+    return result.changes > 0;
   }
 
   async addSubtask(todoId: string, title: string, completed: boolean = false): Promise<SubTask> {
     const stId = uuidv4();
     const now = new Date().toISOString();
 
-    const newSubtask: SubTask = {
-      id: stId,
-      todoId,
-      title,
-      completed: Boolean(completed),
-      createdAt: now,
-    };
-
-    const doc = await TodoModel.findOneAndUpdate(
-      { id: todoId },
-      { $push: { subtasks: newSubtask }, $set: { updatedAt: now } },
-      { new: true }
-    );
-
-    if (!doc) {
+    const todo = await dbGet(`SELECT * FROM todos WHERE id = ?`, [todoId]);
+    if (!todo) {
       throw new Error(`Todo with ID ${todoId} not found`);
     }
 
-    return newSubtask;
+    await dbRun(
+      `INSERT INTO subtasks (id, todoId, title, completed, createdAt) VALUES (?, ?, ?, ?, ?)`,
+      [stId, todoId, title, completed ? 1 : 0, now]
+    );
+    
+    await dbRun(`UPDATE todos SET updatedAt = ? WHERE id = ?`, [now, todoId]);
+
+    return {
+      id: stId,
+      todoId,
+      title,
+      completed,
+      createdAt: now,
+    };
   }
 
   async updateSubtask(subtaskId: string, title?: string, completed?: boolean): Promise<SubTask | null> {
-    const doc = await TodoModel.findOne({ 'subtasks.id': subtaskId });
-    if (!doc) return null;
+    const st = await dbGet(`SELECT * FROM subtasks WHERE id = ?`, [subtaskId]);
+    if (!st) return null;
 
-    const now = new Date().toISOString();
-    let targetSubtask: SubTask | null = null;
+    let updateClauses: string[] = [];
+    let updateParams: any[] = [];
 
-    for (const st of doc.subtasks) {
-      if (st.id === subtaskId) {
-        if (title !== undefined) st.title = title;
-        if (completed !== undefined) st.completed = completed;
-        targetSubtask = {
-          id: st.id,
-          todoId: st.todoId,
-          title: st.title,
-          completed: st.completed,
-          createdAt: st.createdAt,
-        };
-        break;
-      }
+    if (title !== undefined) {
+      updateClauses.push(`title = ?`);
+      updateParams.push(title);
+    }
+    if (completed !== undefined) {
+      updateClauses.push(`completed = ?`);
+      updateParams.push(completed ? 1 : 0);
     }
 
-    doc.updatedAt = now;
-    await doc.save();
+    if (updateClauses.length > 0) {
+      updateParams.push(subtaskId);
+      await dbRun(`UPDATE subtasks SET ${updateClauses.join(', ')} WHERE id = ?`, updateParams);
+      
+      const now = new Date().toISOString();
+      await dbRun(`UPDATE todos SET updatedAt = ? WHERE id = ?`, [now, st.todoId]);
+    }
 
-    return targetSubtask;
+    const updatedSt = await dbGet(`SELECT * FROM subtasks WHERE id = ?`, [subtaskId]);
+    return {
+      id: updatedSt.id,
+      todoId: updatedSt.todoId,
+      title: updatedSt.title,
+      completed: Boolean(updatedSt.completed),
+      createdAt: updatedSt.createdAt,
+    };
   }
 
   async deleteSubtask(subtaskId: string): Promise<boolean> {
-    const now = new Date().toISOString();
-    const doc = await TodoModel.findOneAndUpdate(
-      { 'subtasks.id': subtaskId },
-      { $pull: { subtasks: { id: subtaskId } }, $set: { updatedAt: now } },
-      { new: true }
-    );
+    const st = await dbGet(`SELECT * FROM subtasks WHERE id = ?`, [subtaskId]);
+    if (!st) return false;
 
-    return doc !== null;
+    const result = await dbRun(`DELETE FROM subtasks WHERE id = ?`, [subtaskId]);
+    if (result.changes > 0) {
+      const now = new Date().toISOString();
+      await dbRun(`UPDATE todos SET updatedAt = ? WHERE id = ?`, [now, st.todoId]);
+      return true;
+    }
+    return false;
   }
 
   async getSummaryStats(): Promise<TodoSummaryStats> {
-    const total = await TodoModel.countDocuments();
-    const completed = await TodoModel.countDocuments({ status: 'completed' });
-    const pending = await TodoModel.countDocuments({ status: 'pending' });
-    const inProgress = await TodoModel.countDocuments({ status: 'in_progress' });
-
+    const totalRow = await dbGet(`SELECT COUNT(*) as c FROM todos`);
+    const completedRow = await dbGet(`SELECT COUNT(*) as c FROM todos WHERE status = 'completed'`);
+    const pendingRow = await dbGet(`SELECT COUNT(*) as c FROM todos WHERE status = 'pending'`);
+    const inProgressRow = await dbGet(`SELECT COUNT(*) as c FROM todos WHERE status = 'in_progress'`);
+    
     const nowIso = new Date().toISOString();
-    const overdue = await TodoModel.countDocuments({
-      status: { $ne: 'completed' },
-      dueDate: { $ne: null, $lt: nowIso },
-    });
+    const overdueRow = await dbGet(`SELECT COUNT(*) as c FROM todos WHERE status != 'completed' AND dueDate IS NOT NULL AND dueDate < ?`, [nowIso]);
 
-    const priorityAggregation = await TodoModel.aggregate([
-      { $group: { _id: '$priority', count: { $sum: 1 } } },
-    ]);
-
+    const priorityRows = await dbAll(`SELECT priority, COUNT(*) as count FROM todos GROUP BY priority`);
     const byPriority: Record<string, number> = { low: 0, medium: 0, high: 0, urgent: 0 };
-    for (const item of priorityAggregation) {
-      if (item._id) {
-        byPriority[item._id] = item.count;
-      }
+    for (const row of priorityRows) {
+      byPriority[row.priority] = row.count;
     }
 
-    const categoryAggregation = await TodoModel.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-    ]);
-
+    const categoryRows = await dbAll(`SELECT category, COUNT(*) as count FROM todos GROUP BY category`);
     const byCategory: Record<string, number> = {};
-    for (const item of categoryAggregation) {
-      if (item._id) {
-        byCategory[item._id] = item.count;
-      }
+    for (const row of categoryRows) {
+      byCategory[row.category] = row.count;
     }
 
     return {
-      total,
-      completed,
-      pending,
-      inProgress,
-      overdue,
-      byPriority: byPriority as Record<any, number>,
+      total: totalRow?.c || 0,
+      completed: completedRow?.c || 0,
+      pending: pendingRow?.c || 0,
+      inProgress: inProgressRow?.c || 0,
+      overdue: overdueRow?.c || 0,
+      byPriority,
       byCategory,
     };
   }

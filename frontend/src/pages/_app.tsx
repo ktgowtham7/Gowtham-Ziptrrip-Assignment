@@ -1,5 +1,7 @@
 import type { AppProps } from 'next/app';
 import { useState, useEffect, createContext, useContext } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
 
 interface ThemeContextType {
@@ -13,6 +15,12 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const useTheme = () => useContext(ThemeContext);
+
+const queryClient = new QueryClient();
+
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export default function App({ Component, pageProps }: AppProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -36,7 +44,12 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <Component {...pageProps} />
+      <QueryClientProvider client={queryClient}>
+        <div className={inter.className}>
+          <Component {...pageProps} />
+        </div>
+        <Toaster position="bottom-right" />
+      </QueryClientProvider>
     </ThemeContext.Provider>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Todo } from '../types/todo';
 
 interface TodoCardProps {
@@ -30,26 +31,22 @@ export const TodoCard: React.FC<TodoCardProps> = ({
     : null;
 
   return (
-    <div
-      className="card"
-      style={{
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        position: 'relative',
-        opacity: isCompleted ? 0.82 : 1,
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3 }}
+      className={`card p-6 flex flex-col justify-between relative bg-card border border-borderBase rounded-xl shadow-sm hover:shadow-md transition-shadow ${isCompleted ? 'opacity-80' : ''}`}
     >
       <div>
-        {/* Top Badges & Checkbox */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-3">
             <input
               type="checkbox"
               checked={isCompleted}
               onChange={() => onStatusToggle(todo.id, todo.status)}
-              style={{ width: '17px', height: '17px', cursor: 'pointer', accentColor: '#34d399' }}
+              className="w-5 h-5 rounded cursor-pointer accent-emerald-400 focus:ring-emerald-500 focus:ring-2"
               title={`Mark as ${isCompleted ? 'Pending' : 'Completed'}`}
             />
             <span className={`badge badge-${todo.status}`}>
@@ -57,123 +54,79 @@ export const TodoCard: React.FC<TodoCardProps> = ({
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <div className="flex gap-2 items-center">
             <span className={`badge badge-priority-${todo.priority}`}>
               {todo.priority}
             </span>
-            <span
-              style={{
-                fontSize: '0.725rem',
-                fontWeight: 600,
-                padding: '3px 8px',
-                borderRadius: '6px',
-                background: 'var(--bg-input)',
-                color: 'var(--text-muted)',
-                border: '1px solid var(--border-color)',
-              }}
-            >
+            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-input text-textMuted border border-borderBase shadow-sm">
               {todo.category}
             </span>
           </div>
         </div>
 
-        {/* Title linked to detail page /todo?id=<todo.id> */}
-        <Link href={`/todo?id=${todo.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+        <Link href={`/todo?id=${todo.id}`} className="block group">
           <h3
-            style={{
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              marginBottom: '8px',
-              color: 'var(--text-main)',
-              textDecoration: isCompleted ? 'line-through' : 'none',
-              lineHeight: 1.38,
-              letterSpacing: '-0.015em',
-            }}
+            className={`text-lg font-bold mb-2 text-textMain group-hover:text-accent-blue transition-colors leading-tight tracking-tight ${isCompleted ? 'line-through text-textMuted' : ''}`}
           >
             {todo.title}
           </h3>
         </Link>
 
         {todo.description && (
-          <p
-            style={{
-              fontSize: '0.875rem',
-              color: 'var(--text-muted)',
-              marginBottom: '16px',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical' as any,
-              overflow: 'hidden',
-              lineHeight: 1.55,
-            }}
-          >
+          <p className="text-sm text-textMuted mb-4 line-clamp-2 leading-relaxed">
             {todo.description}
           </p>
         )}
 
-        {/* Subtask Progress Bar */}
         {totalSubtasks > 0 && (
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+          <div className="mb-4">
+            <div className="flex justify-between text-xs text-textMuted font-semibold mb-2">
               <span>Subtasks</span>
               <span>{completedSubtasks}/{totalSubtasks} ({subtaskProgress}%)</span>
             </div>
-            <div style={{ height: '5px', width: '100%', background: 'var(--bg-input)', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${subtaskProgress}%`,
-                  background: subtaskProgress === 100 ? '#34d399' : '#60a5fa',
-                  borderRadius: '9999px',
-                  transition: 'width 0.3s ease',
-                }}
+            <div className="h-1.5 w-full bg-input rounded-full overflow-hidden shadow-inner">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${subtaskProgress}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className={`h-full rounded-full ${subtaskProgress === 100 ? 'bg-emerald-400' : 'bg-blue-400'}`}
               />
             </div>
           </div>
         )}
       </div>
 
-      {/* Card Footer */}
-      <div
-        style={{
-          borderTop: '1px solid var(--border-color)',
-          paddingTop: '14px',
-          marginTop: '8px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+      <div className="border-t border-borderBase pt-4 mt-2 flex justify-between items-center">
+        <div className="text-xs text-textMuted font-medium flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
           {formattedDueDate ? `Due ${formattedDueDate}` : 'No due date'}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/todo?id=${todo.id}`}
+            className="btn-secondary px-3 py-1.5 text-xs font-semibold hover:bg-cardHover flex items-center gap-1"
+          >
+            View
+          </Link>
+
           <button
             onClick={() => onEdit(todo)}
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            className="btn-secondary px-3 py-1.5 text-xs font-semibold hover:bg-cardHover"
           >
             Edit
           </button>
 
           <button
             onClick={() => onDelete(todo.id)}
-            className="btn-danger"
-            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            className="btn-danger px-3 py-1.5 text-xs font-semibold hover:bg-rose-500/20"
           >
             Delete
           </button>
-
-          <Link
-            href={`/todo?id=${todo.id}`}
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#60a5fa' }}
-          >
-            Details →
-          </Link>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

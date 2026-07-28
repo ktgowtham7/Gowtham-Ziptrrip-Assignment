@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import { TodoFormModal } from '../components/TodoFormModal';
 import { todoApi } from '../services/api';
@@ -22,99 +25,102 @@ import {
 export default function SingleTodoPage() {
   const router = useRouter();
   const { id } = router.query;
-
-  const [todo, setTodo] = useState<Todo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
 
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const fetchTodoDetails = useCallback(async () => {
-    if (!id || typeof id !== 'string') return;
+  const { data: todo, isLoading: loading, error } = useQuery({
+    queryKey: ['todo', id],
+    queryFn: () => todoApi.getTodoById(id as string),
+    enabled: !!id && typeof id === 'string',
+    retry: false,
+  });
 
-    setLoading(true);
-    setError('');
-    try {
-      const data = await todoApi.getTodoById(id);
-      setTodo(data);
-    } catch (err: any) {
-      console.error('Failed to load todo details:', err);
-      setError(err.response?.data?.error || `Todo item with ID '${id}' was not found.`);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const toggleStatusMutation = useMutation({
+    mutationFn: (status: 'pending' | 'in_progress' | 'completed') => todoApi.updateStatus(id as string, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todo', id] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast.success('Status updated');
+    },
+    onError: () => toast.error('Failed to update status'),
+  });
 
-  useEffect(() => {
-    if (router.isReady) {
-      if (!id) {
-        setError('No Todo ID query parameter provided. Expected URL format: /todo?id=<todo_id>');
-        setLoading(false);
-      } else {
-        fetchTodoDetails();
-      }
-    }
-  }, [router.isReady, id, fetchTodoDetails]);
+  const addSubtaskMutation = useMutation({
+    mutationFn: (title: string) => todoApi.addSubtask(id as string, title),
+    onSuccess: () => {
+      setNewSubtaskTitle('');
+      queryClient.invalidateQueries({ queryKey: ['todo', id] });
+      toast.success('Subtask added');
+    },
+    onError: () => toast.error('Failed to add subtask'),
+  });
 
-  const handleStatusToggle = async () => {
+  const toggleSubtaskMutation = useMutation({
+    mutationFn: ({ subtaskId, completed }: { subtaskId: string, completed: boolean }) => 
+      todoApi.updateSubtask(subtaskId, undefined, completed),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todo', id] });
+    },
+    onError: () => toast.error('Failed to update subtask'),
+  });
+
+  const deleteSubtaskMutation = useMutation({
+    mutationFn: (subtaskId: string) => todoApi.deleteSubtask(subtaskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todo', id] });
+      toast.success('Subtask deleted');
+    },
+    onError: () => toast.error('Failed to delete subtask'),
+  });
+
+  const deleteTodoMutation = useMutation({
+    mutationFn: () => todoApi.deleteTodo(id as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast.success('Todo deleted');
+      router.push('/todos');
+    },
+    onError: () => toast.error('Failed to delete todo'),
+  });
+
+  const updateTodoMutation = useMutation({
+    mutationFn: (input: CreateTodoInput) => todoApi.updateTodo(id as string, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todo', id] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast.success('Todo updated');
+      setIsEditModalOpen(false);
+    },
+    onError: () => toast.error('Failed to update todo'),
+  });
+
+  const handleStatusToggle = () => {
     if (!todo) return;
     const nextStatus = todo.status === 'completed' ? 'pending' : 'completed';
-    try {
-      const updated = await todoApi.updateStatus(todo.id, nextStatus);
-      setTodo(updated);
-    } catch (err) {
-      console.error('Failed to toggle status:', err);
-    }
+    toggleStatusMutation.mutate(nextStatus);
   };
 
-  const handleAddSubtask = async (e: React.FormEvent) => {
+  const handleAddSubtask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!todo || !newSubtaskTitle.trim()) return;
-
-    try {
-      await todoApi.addSubtask(todo.id, newSubtaskTitle.trim());
-      setNewSubtaskTitle('');
-      fetchTodoDetails();
-    } catch (err) {
-      console.error('Failed to add subtask:', err);
+    if (newSubtaskTitle.trim()) {
+      addSubtaskMutation.mutate(newSubtaskTitle.trim());
     }
   };
 
-  const handleToggleSubtask = async (subtaskId: string, currentCompleted: boolean) => {
-    try {
-      await todoApi.updateSubtask(subtaskId, undefined, !currentCompleted);
-      fetchTodoDetails();
-    } catch (err) {
-      console.error('Failed to update subtask:', err);
-    }
-  };
-
-  const handleDeleteSubtask = async (subtaskId: string) => {
-    try {
-      await todoApi.deleteSubtask(subtaskId);
-      fetchTodoDetails();
-    } catch (err) {
-      console.error('Failed to delete subtask:', err);
-    }
-  };
-
-  const handleDeleteTodo = async () => {
-    if (!todo) return;
+  const handleDeleteTodo = () => {
     if (confirm('Are you sure you want to delete this todo item permanently?')) {
-      try {
-        await todoApi.deleteTodo(todo.id);
-        router.push('/todos');
-      } catch (err) {
-        console.error('Failed to delete todo:', err);
-      }
+      deleteTodoMutation.mutate();
     }
   };
 
   const handleFormSubmit = async (input: CreateTodoInput, editId?: string) => {
     if (editId) {
-      await todoApi.updateTodo(editId, input);
-      fetchTodoDetails();
+      updateTodoMutation.mutate(input);
     }
   };
 
@@ -126,127 +132,125 @@ export default function SingleTodoPage() {
     <>
       <Head>
         <title>{todo ? `${todo.title} - Ziptrrip Todo` : 'Single Todo Detail Page'}</title>
-        <meta name="description" content="Single Todo Item Details Page with query parameter ID support" />
+        <meta name="description" content="Single Todo Item Details Page" />
       </Head>
 
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="min-h-screen flex flex-col bg-background text-textMain">
         <Navbar />
 
-        <main style={{ maxWidth: '900px', width: '100%', margin: '0 auto', padding: '32px 24px', flex: 1 }}>
-          {/* Back button */}
-          <div style={{ marginBottom: '24px' }}>
-            <Link href="/todos" className="btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem' }}>
+        <main className="max-w-4xl w-full mx-auto px-6 py-8 flex-1">
+          <div className="mb-6">
+            <Link href="/todos" className="btn-secondary px-4 py-2 text-sm inline-flex items-center gap-2 hover:bg-cardHover">
               <ArrowLeft size={16} /> Back to All Todos
             </Link>
           </div>
 
-          {loading ? (
-            <div className="card" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              Loading todo item details...
+          {!router.isReady ? null : !id ? (
+            <div className="card p-10 text-center text-rose-500 bg-rose-500/10 rounded-xl">
+              <AlertCircle size={48} className="mx-auto mb-4" />
+              <h2 className="text-xl font-bold mb-2">Invalid URL</h2>
+              <p className="text-sm">No Todo ID query parameter provided.</p>
+              <Link href="/todos" className="btn-primary mt-6 inline-flex">
+                Return to Dashboard
+              </Link>
+            </div>
+          ) : loading ? (
+            <div className="py-20 text-center text-textMuted flex flex-col items-center justify-center space-y-4">
+              <div className="spin rounded-full h-8 w-8 border-b-2 border-accent-blue"></div>
+              <p>Loading todo item details...</p>
             </div>
           ) : error || !todo ? (
-            <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
-              <AlertCircle size={48} color="#f43f5e" style={{ marginBottom: '16px' }} />
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>Todo Not Found</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>{error}</p>
-              <Link href="/todos" className="btn-primary">
+            <div className="card p-10 text-center bg-card rounded-xl">
+              <AlertCircle size={48} className="mx-auto mb-4 text-rose-500" />
+              <h2 className="text-xl font-bold mb-2">Todo Not Found</h2>
+              <p className="text-sm text-textMuted mb-6">The requested todo could not be loaded.</p>
+              <Link href="/todos" className="btn-primary inline-flex">
                 Return to Dashboard
               </Link>
             </div>
           ) : (
-            <div className="card" style={{ padding: '32px' }}>
-              {/* Header Details */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card p-8 bg-card rounded-2xl shadow-sm border border-borderBase">
+              <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+                <div className="flex gap-2 items-center">
                   <span className={`badge badge-${todo.status}`}>
                     {todo.status.replace('_', ' ')}
                   </span>
                   <span className={`badge badge-priority-${todo.priority}`}>
                     {todo.priority} Priority
                   </span>
-                  <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: '6px', background: 'var(--bg-input)', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  <span className="text-xs px-2.5 py-1 rounded-md bg-input text-textMuted font-semibold border border-borderBase">
                     {todo.category}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => setIsEditModalOpen(true)} className="btn-secondary" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+                <div className="flex gap-2">
+                  <button onClick={() => setIsEditModalOpen(true)} className="btn-secondary px-3 py-2 text-sm flex items-center gap-1.5 hover:bg-cardHover">
                     <Edit2 size={15} /> Edit
                   </button>
-                  <button onClick={handleDeleteTodo} className="btn-danger" style={{ fontSize: '0.85rem' }}>
+                  <button onClick={handleDeleteTodo} className="btn-danger px-3 py-2 text-sm flex items-center gap-1.5 hover:bg-rose-500/20">
                     <Trash2 size={15} /> Delete
                   </button>
                 </div>
               </div>
 
-              {/* Title & Status Toggle */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
+              <div className="flex items-start gap-4 mb-8">
                 <button
                   onClick={handleStatusToggle}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: todo.status === 'completed' ? '#10b981' : 'var(--text-muted)',
-                    marginTop: '4px',
-                  }}
+                  className={`mt-1.5 transition-colors ${todo.status === 'completed' ? 'text-emerald-500' : 'text-textMuted hover:text-emerald-400'}`}
                   title="Toggle status"
                 >
-                  {todo.status === 'completed' ? <CheckCircle2 size={32} color="#10b981" /> : <Circle size={32} />}
+                  {todo.status === 'completed' ? <CheckCircle2 size={32} /> : <Circle size={32} />}
                 </button>
                 <div>
-                  <h1 style={{ fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.3, textDecoration: todo.status === 'completed' ? 'line-through' : 'none' }}>
+                  <h1 className={`text-3xl font-extrabold leading-tight ${todo.status === 'completed' ? 'line-through text-textMuted' : ''}`}>
                     {todo.title}
                   </h1>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Query Parameter ID: <code style={{ background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px' }}>{todo.id}</code>
+                  <div className="text-xs text-textMuted mt-2 font-mono bg-input px-2 py-1 rounded inline-block border border-borderBase">
+                    ID: {todo.id}
                   </div>
                 </div>
               </div>
 
-              {/* Description */}
-              <div style={{ borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', padding: '20px 0', margin: '20px 0' }}>
-                <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+              <div className="border-y border-borderBase py-6 my-6">
+                <h3 className="text-sm text-textMuted font-bold uppercase tracking-wider mb-3">
                   Description
                 </h3>
-                <p style={{ fontSize: '1rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: todo.description ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                <p className={`text-base leading-relaxed whitespace-pre-wrap ${todo.description ? 'text-textMain' : 'text-textMuted italic'}`}>
                   {todo.description || 'No description provided for this todo.'}
                 </p>
               </div>
 
-              {/* Metadata Info Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-input)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Created At</span>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock size={14} /> {new Date(todo.createdAt).toLocaleString()}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div className="p-4 rounded-xl bg-input border border-borderBase">
+                  <span className="text-xs text-textMuted block mb-1 font-semibold">Created At</span>
+                  <div className="text-sm font-bold flex items-center gap-2">
+                    <Clock size={14} className="text-textMuted" /> {new Date(todo.createdAt).toLocaleString()}
                   </div>
                 </div>
 
-                <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-input)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Last Updated</span>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock size={14} /> {new Date(todo.updatedAt).toLocaleString()}
+                <div className="p-4 rounded-xl bg-input border border-borderBase">
+                  <span className="text-xs text-textMuted block mb-1 font-semibold">Last Updated</span>
+                  <div className="text-sm font-bold flex items-center gap-2">
+                    <Clock size={14} className="text-textMuted" /> {new Date(todo.updatedAt).toLocaleString()}
                   </div>
                 </div>
 
-                <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-input)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Target Due Date</span>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', color: todo.dueDate ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                <div className="p-4 rounded-xl bg-input border border-borderBase">
+                  <span className="text-xs text-textMuted block mb-1 font-semibold">Target Due Date</span>
+                  <div className={`text-sm font-bold flex items-center gap-2 ${todo.dueDate ? 'text-blue-400' : 'text-textMuted'}`}>
                     <Calendar size={14} /> {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'None'}
                   </div>
                 </div>
               </div>
 
-              {/* Tags */}
               {todo.tags && todo.tags.length > 0 && (
-                <div style={{ marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+                <div className="mb-8">
+                  <h3 className="text-sm text-textMuted font-bold uppercase tracking-wider mb-3">
                     Associated Tags
                   </h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <div className="flex flex-wrap gap-2">
                     {todo.tags.map((tag) => (
-                      <span key={tag} style={{ fontSize: '0.8rem', padding: '4px 12px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.15)', color: 'var(--accent-primary)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span key={tag} className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 font-semibold inline-flex items-center gap-1.5 border border-blue-500/20">
                         <Tag size={12} /> {tag}
                       </span>
                     ))}
@@ -254,73 +258,66 @@ export default function SingleTodoPage() {
                 </div>
               )}
 
-              {/* Subtasks Management */}
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-                    Subtasks ({completedSubtasks}/{totalSubtasks})
+              <div className="border-t border-borderBase pt-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold">
+                    Subtasks <span className="text-textMuted text-lg font-medium ml-1">({completedSubtasks}/{totalSubtasks})</span>
                   </h3>
                   {totalSubtasks > 0 && (
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    <span className="text-sm text-textMuted font-bold">
                       {subtaskProgress}% Completed
                     </span>
                   )}
                 </div>
 
-                {/* Progress bar */}
                 {totalSubtasks > 0 && (
-                  <div style={{ height: '8px', width: '100%', background: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden', marginBottom: '20px' }}>
-                    <div style={{ height: '100%', width: `${subtaskProgress}%`, background: subtaskProgress === 100 ? '#10b981' : '#3b82f6', transition: 'width 0.3s ease' }} />
+                  <div className="h-2 w-full bg-input rounded-full overflow-hidden mb-6 shadow-inner">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${subtaskProgress}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                      className={`h-full rounded-full ${subtaskProgress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                    />
                   </div>
                 )}
 
-                {/* Add Subtask Form */}
-                <form onSubmit={handleAddSubtask} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <form onSubmit={handleAddSubtask} className="flex gap-3 mb-6">
                   <input
                     type="text"
-                    className="input-control"
+                    className="input-control flex-1"
                     placeholder="Add a new subtask step..."
                     value={newSubtaskTitle}
                     onChange={(e) => setNewSubtaskTitle(e.target.value)}
                   />
-                  <button type="submit" className="btn-primary" style={{ padding: '8px 16px', whiteSpace: 'nowrap' }}>
-                    <Plus size={16} /> Add Subtask
+                  <button type="submit" className="btn-primary px-5 whitespace-nowrap shadow-md" disabled={addSubtaskMutation.isPending}>
+                    <Plus size={16} /> Add
                   </button>
                 </form>
 
-                {/* Subtasks List */}
                 {totalSubtasks === 0 ? (
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '12px 0' }}>
+                  <div className="text-sm text-textMuted italic p-4 text-center bg-input/50 rounded-xl border border-borderBase border-dashed">
                     No subtasks added yet. Use the field above to break down this task.
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="flex flex-col gap-3">
                     {todo.subtasks?.map((st) => (
                       <div
                         key={st.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '12px 16px',
-                          borderRadius: '10px',
-                          background: 'var(--bg-input)',
-                          border: '1px solid var(--border-color)',
-                        }}
+                        className="flex items-center justify-between p-4 rounded-xl bg-input border border-borderBase hover:border-borderHover transition-colors group shadow-sm"
                       >
-                        <div
-                          onClick={() => handleToggleSubtask(st.id, st.completed)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', flex: 1 }}
+                        <button
+                          onClick={() => toggleSubtaskMutation.mutate({ subtaskId: st.id, completed: !st.completed })}
+                          className="flex items-center gap-3 flex-1 text-left"
                         >
-                          {st.completed ? <CheckCircle2 size={20} color="#10b981" /> : <Circle size={20} color="var(--text-muted)" />}
-                          <span style={{ fontSize: '0.95rem', textDecoration: st.completed ? 'line-through' : 'none', color: st.completed ? 'var(--text-muted)' : 'var(--text-main)' }}>
+                          {st.completed ? <CheckCircle2 size={20} className="text-emerald-500" /> : <Circle size={20} className="text-textMuted group-hover:text-blue-400 transition-colors" />}
+                          <span className={`text-sm font-medium transition-colors ${st.completed ? 'line-through text-textMuted' : 'text-textMain'}`}>
                             {st.title}
                           </span>
-                        </div>
+                        </button>
 
                         <button
-                          onClick={() => handleDeleteSubtask(st.id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--accent-rose)', cursor: 'pointer', padding: '4px' }}
+                          onClick={() => deleteSubtaskMutation.mutate(st.id)}
+                          className="text-textMuted hover:text-rose-500 p-2 rounded-lg hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                           title="Delete subtask"
                         >
                           <Trash2 size={16} />
@@ -330,18 +327,20 @@ export default function SingleTodoPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
         </main>
 
-        {/* Edit Modal */}
-        <TodoFormModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSubmit={handleFormSubmit}
-          initialTodo={todo}
-        />
+        {todo && (
+          <TodoFormModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onSubmit={handleFormSubmit}
+            initialTodo={todo}
+          />
+        )}
       </div>
     </>
   );
 }
+

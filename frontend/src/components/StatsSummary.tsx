@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { TodoSummaryStats } from '../types/todo';
 
 interface StatsSummaryProps {
@@ -10,72 +11,83 @@ export const StatsSummary: React.FC<StatsSummaryProps> = ({ stats }) => {
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div style={{ marginBottom: '28px' }}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '18px',
-        }}
+    <div className="mb-8">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
       >
         {/* Total Todos Card */}
-        <div className="card" style={{ padding: '22px' }}>
-          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+        <motion.div variants={itemVariants} className="card p-6 bg-card border border-borderBase rounded-xl shadow-sm">
+          <div className="text-xs text-textMuted font-bold uppercase tracking-wider mb-2">
             Total Tasks
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.03em' }}>{stats.total}</div>
-          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>
+          <div className="text-4xl font-extrabold tracking-tight text-textMain">{stats.total}</div>
+          <div className="text-xs text-textMuted mt-1 font-medium">
             All registered items
           </div>
-        </div>
+        </motion.div>
 
         {/* Completed Card */}
-        <div className="card" style={{ padding: '22px' }}>
-          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+        <motion.div variants={itemVariants} className="card p-6 bg-card border border-borderBase rounded-xl shadow-sm">
+          <div className="text-xs text-textMuted font-bold uppercase tracking-wider mb-2">
             Completed
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#34d399', letterSpacing: '-0.03em' }}>{stats.completed}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-            <div style={{ flex: 1, height: '4px', background: 'var(--bg-input)', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div
-                style={{
-                  width: `${completionRate}%`,
-                  height: '100%',
-                  background: '#34d399',
-                  borderRadius: '9999px',
-                  transition: 'width 0.4s ease',
-                }}
+          <div className="text-4xl font-extrabold tracking-tight text-emerald-400">{stats.completed}</div>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="flex-1 h-1.5 bg-input rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${completionRate}%` }}
+                transition={{ duration: 1, ease: 'easeOut' }}
+                className="h-full bg-emerald-400 rounded-full"
               />
             </div>
-            <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 700 }}>{completionRate}%</span>
+            <span className="text-xs text-emerald-400 font-bold">{completionRate}%</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Active Card */}
-        <div className="card" style={{ padding: '22px' }}>
-          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+        <motion.div variants={itemVariants} className="card p-6 bg-card border border-borderBase rounded-xl shadow-sm">
+          <div className="text-xs text-textMuted font-bold uppercase tracking-wider mb-2">
             Active Tasks
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#60a5fa', letterSpacing: '-0.03em' }}>
+          <div className="text-4xl font-extrabold tracking-tight text-blue-400">
             {stats.pending + stats.inProgress}
           </div>
-          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>
+          <div className="text-xs text-textMuted mt-1 font-medium">
             {stats.inProgress} in progress, {stats.pending} pending
           </div>
-        </div>
+        </motion.div>
 
         {/* Overdue Card */}
-        <div className="card" style={{ padding: '22px' }}>
-          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+        <motion.div variants={itemVariants} className="card p-6 bg-card border border-borderBase rounded-xl shadow-sm">
+          <div className="text-xs text-textMuted font-bold uppercase tracking-wider mb-2">
             Overdue
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fb7185', letterSpacing: '-0.03em' }}>{stats.overdue}</div>
-          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>
+          <div className="text-4xl font-extrabold tracking-tight text-rose-400">{stats.overdue}</div>
+          <div className="text-xs text-textMuted mt-1 font-medium">
             Past target deadline
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
