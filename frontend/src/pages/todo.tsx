@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Navbar } from '../components/Navbar';
 import { TodoFormModal } from '../components/TodoFormModal';
 import { todoApi } from '../services/api';
-import { Todo, SubTask, CreateTodoInput } from '../types/todo';
+import { Todo, CreateTodoInput } from '../types/todo';
 import {
   ArrowLeft,
   Calendar,
@@ -16,7 +16,6 @@ import {
   Plus,
   Trash2,
   Edit2,
-  CheckSquare,
   AlertCircle,
 } from 'lucide-react';
 
@@ -142,11 +141,11 @@ export default function SingleTodoPage() {
           </div>
 
           {loading ? (
-            <div className="glass-card" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <div className="card" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
               Loading todo item details...
             </div>
           ) : error || !todo ? (
-            <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
+            <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
               <AlertCircle size={48} color="#f43f5e" style={{ marginBottom: '16px' }} />
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>Todo Not Found</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>{error}</p>
@@ -155,7 +154,7 @@ export default function SingleTodoPage() {
               </Link>
             </div>
           ) : (
-            <div className="glass-card" style={{ padding: '32px' }}>
+            <div className="card" style={{ padding: '32px' }}>
               {/* Header Details */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -233,7 +232,7 @@ export default function SingleTodoPage() {
 
                 <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-input)' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Target Due Date</span>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', color: todo.dueDate ? 'var(--accent-blue)' : 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', color: todo.dueDate ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
                     <Calendar size={14} /> {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'None'}
                   </div>
                 </div>
@@ -247,7 +246,7 @@ export default function SingleTodoPage() {
                   </h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {todo.tags.map((tag) => (
-                      <span key={tag} style={{ fontSize: '0.8rem', padding: '4px 12px', borderRadius: '6px', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span key={tag} style={{ fontSize: '0.8rem', padding: '4px 12px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.15)', color: 'var(--accent-primary)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                         <Tag size={12} /> {tag}
                       </span>
                     ))}

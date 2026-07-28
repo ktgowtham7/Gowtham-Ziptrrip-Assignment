@@ -127,7 +127,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             <input
               type="text"
               className="input-control"
-              placeholder="e.g. Complete Ziptrrip API Integration"
+              placeholder="e.g. Complete Ziptrrip Tech Assignment"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -139,7 +139,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             <textarea
               className="input-control"
               rows={3}
-              placeholder="Add extra details, requirements, links..."
+              placeholder="Add extra details, requirements..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -172,7 +172,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
               <input
                 type="text"
                 className="input-control"
-                placeholder="Work, Personal, Design..."
+                placeholder="Work, Personal..."
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               />
@@ -194,7 +194,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             <input
               type="text"
               className="input-control"
-              placeholder="api, urgent, backend"
+              placeholder="work, assignment, urgent"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
             />

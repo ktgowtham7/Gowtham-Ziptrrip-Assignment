@@ -1,6 +1,6 @@
 import React from 'react';
 import { TodoQueryParams, TodoStatus, TodoPriority } from '../types/todo';
-import { Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, ArrowUpDown, X } from 'lucide-react';
 
 interface FilterBarProps {
   filters: TodoQueryParams;
@@ -9,9 +9,23 @@ interface FilterBarProps {
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categories }) => {
+  const hasActiveFilters = Boolean(
+    filters.search || filters.status || filters.priority || filters.category
+  );
+
+  const clearFilters = () => {
+    onChange({
+      search: '',
+      status: undefined,
+      priority: undefined,
+      category: undefined,
+      page: 1,
+    });
+  };
+
   return (
     <div
-      className="glass-card"
+      className="card"
       style={{
         padding: '16px 20px',
         marginBottom: '24px',
@@ -36,11 +50,30 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
         <input
           type="text"
           className="input-control"
-          style={{ paddingLeft: '36px' }}
+          style={{ paddingLeft: '36px', paddingRight: '36px' }}
           placeholder="Search by title, description..."
           value={filters.search || ''}
           onChange={(e) => onChange({ search: e.target.value, page: 1 })}
         />
+        {filters.search && (
+          <button
+            onClick={() => onChange({ search: '', page: 1 })}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {/* Status Filter */}
@@ -112,6 +145,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
           <ArrowUpDown size={16} />
         </button>
       </div>
+
+      {/* Clear Filters */}
+      {hasActiveFilters && (
+        <button
+          onClick={clearFilters}
+          className="btn-secondary"
+          style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--accent-rose)' }}
+        >
+          <X size={14} /> Clear
+        </button>
+      )}
     </div>
   );
 };

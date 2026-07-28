@@ -131,7 +131,7 @@ export default function TodosPage() {
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => fetchTodos()} className="btn-secondary" title="Refresh list">
-                <RefreshCw size={16} />
+                <RefreshCw size={16} className={loading ? 'spin' : ''} />
               </button>
               <button onClick={handleOpenCreateModal} className="btn-primary">
                 <Plus size={18} /> New Todo
@@ -159,7 +159,7 @@ export default function TodosPage() {
               <div>Loading todos...</div>
             </div>
           ) : todos.length === 0 ? (
-            <div className="glass-card" style={{ padding: '60px', textAlign: 'center' }}>
+            <div className="card" style={{ padding: '60px', textAlign: 'center' }}>
               <Inbox size={48} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
               <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '8px' }}>No Todos Found</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>

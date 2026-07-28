@@ -4,13 +4,11 @@ import { Todo } from '../types/todo';
 import {
   CheckCircle2,
   Circle,
-  Clock,
   Calendar,
   Tag,
   ChevronRight,
   Trash2,
   Edit2,
-  CheckSquare,
 } from 'lucide-react';
 
 interface TodoCardProps {
@@ -55,7 +53,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
 
   return (
     <div
-      className="glass-card"
+      className="card"
       style={{
         padding: '20px',
         display: 'flex',
@@ -66,7 +64,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
       }}
     >
       <div>
-        {/* Top Header Row: Checkbox, Status & Priority Badges */}
+        {/* Top Row: Checkbox, Status & Priority Badges */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
@@ -152,8 +150,8 @@ export const TodoCard: React.FC<TodoCardProps> = ({
                   fontSize: '0.7rem',
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  background: 'rgba(99, 102, 241, 0.1)',
-                  color: '#818cf8',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  color: 'var(--accent-primary)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
@@ -165,7 +163,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           </div>
         )}
 
-        {/* Subtask progress bar */}
+        {/* Subtask Progress Bar */}
         {totalSubtasks > 0 && (
           <div style={{ marginBottom: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
@@ -219,7 +217,6 @@ export const TodoCard: React.FC<TodoCardProps> = ({
             <Trash2 size={16} />
           </button>
 
-          {/* Link to detail page using query parameter ?id= as explicitly requested */}
           <Link
             href={`/todo?id=${todo.id}`}
             style={{
@@ -228,7 +225,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
               gap: '4px',
               fontSize: '0.8rem',
               fontWeight: 600,
-              color: 'var(--accent-blue)',
+              color: 'var(--accent-primary)',
               marginLeft: '4px',
             }}
           >

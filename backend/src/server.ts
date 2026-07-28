@@ -1,17 +1,20 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { createApp } from './app';
-import { initDatabase } from './db/sqlite';
+import { connectMongoDB } from './db/mongodb';
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Initialize Database tables and seed initial data
-    await initDatabase();
+    // Initialize MongoDB Atlas connection & seed initial data if empty
+    await connectMongoDB();
 
     const app = createApp();
 
     app.listen(PORT, () => {
-      console.log(`🚀 Ziptrrip Todo Backend API running at http://localhost:${PORT}`);
+      console.log(`🚀 Ziptrrip Todo Backend API (MongoDB) running at http://localhost:${PORT}`);
       console.log(`📋 Health check: http://localhost:${PORT}/api/health`);
       console.log(`📝 Todos Endpoint: http://localhost:${PORT}/api/todos`);
     });
