@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { CreateTodoInput, Todo, TodoPriority, TodoStatus } from '../types/todo';
-import { X, Plus, Trash2 } from 'lucide-react';
 
 interface TodoFormModalProps {
   isOpen: boolean;
@@ -107,27 +106,27 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-            {initialTodo ? 'Edit Todo Item' : 'Create New Todo'}
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 600 }}>
+            {initialTodo ? 'Edit Todo' : 'New Todo'}
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-            <X size={20} />
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem' }}>
+            ✕
           </button>
         </div>
 
         {error && (
-          <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', fontSize: '0.85rem', marginBottom: '16px' }}>
+          <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', fontSize: '0.85rem', marginBottom: '16px' }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Title *</label>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Title *</label>
             <input
               type="text"
               className="input-control"
-              placeholder="e.g. Complete Ziptrrip Tech Assignment"
+              placeholder="e.g. Finish Tech Assignment"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -135,11 +134,11 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Description</label>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Description</label>
             <textarea
               className="input-control"
               rows={3}
-              placeholder="Add extra details, requirements..."
+              placeholder="Add details..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -147,7 +146,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Status</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Status</label>
               <select className="input-control" value={status} onChange={(e) => setStatus(e.target.value as TodoStatus)}>
                 <option value="pending">Pending</option>
                 <option value="in_progress">In Progress</option>
@@ -156,7 +155,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Priority</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Priority</label>
               <select className="input-control" value={priority} onChange={(e) => setPriority(e.target.value as TodoPriority)}>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -168,7 +167,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Category</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Category</label>
               <input
                 type="text"
                 className="input-control"
@@ -179,7 +178,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Due Date</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Due Date</label>
               <input
                 type="date"
                 className="input-control"
@@ -190,7 +189,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Tags (comma-separated)</label>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Tags (comma-separated)</label>
             <input
               type="text"
               className="input-control"
@@ -202,12 +201,12 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
 
           {!initialTodo && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Subtasks Checklist</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Subtasks</label>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                 <input
                   type="text"
                   className="input-control"
-                  placeholder="Add a subtask step..."
+                  placeholder="Add subtask title..."
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
                   onKeyDown={(e) => {
@@ -217,18 +216,18 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
                     }
                   }}
                 />
-                <button type="button" onClick={handleAddSubtask} className="btn-secondary" style={{ padding: '8px 12px' }}>
-                  <Plus size={16} />
+                <button type="button" onClick={handleAddSubtask} className="btn-secondary">
+                  Add
                 </button>
               </div>
 
               {subtasks.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
                   {subtasks.map((st, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'var(--bg-input)', borderRadius: '6px', fontSize: '0.85rem' }}>
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '0.85rem' }}>
                       <span>• {st.title}</span>
-                      <button type="button" onClick={() => handleRemoveSubtask(idx)} style={{ background: 'none', border: 'none', color: 'var(--accent-rose)', cursor: 'pointer' }}>
-                        <Trash2 size={14} />
+                      <button type="button" onClick={() => handleRemoveSubtask(idx)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer' }}>
+                        ✕
                       </button>
                     </div>
                   ))}
@@ -242,7 +241,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
               Cancel
             </button>
             <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? 'Saving...' : initialTodo ? 'Update Todo' : 'Create Todo'}
+              {loading ? 'Saving...' : initialTodo ? 'Update' : 'Create'}
             </button>
           </div>
         </form>

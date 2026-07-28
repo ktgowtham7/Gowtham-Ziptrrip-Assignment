@@ -1,6 +1,5 @@
 import React from 'react';
 import { TodoQueryParams, TodoStatus, TodoPriority } from '../types/todo';
-import { Search, ArrowUpDown, X } from 'lucide-react';
 
 interface FilterBarProps {
   filters: TodoQueryParams;
@@ -27,57 +26,27 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
     <div
       className="card"
       style={{
-        padding: '16px 20px',
-        marginBottom: '24px',
+        padding: '14px 18px',
+        marginBottom: '20px',
         display: 'flex',
         flexWrap: 'wrap',
-        gap: '12px',
+        gap: '10px',
         alignItems: 'center',
       }}
     >
       {/* Search Input */}
-      <div style={{ flex: '1 1 240px', position: 'relative' }}>
-        <Search
-          size={16}
-          style={{
-            position: 'absolute',
-            left: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'var(--text-muted)',
-          }}
-        />
+      <div style={{ flex: '1 1 220px' }}>
         <input
           type="text"
           className="input-control"
-          style={{ paddingLeft: '36px', paddingRight: '36px' }}
           placeholder="Search by title, description..."
           value={filters.search || ''}
           onChange={(e) => onChange({ search: e.target.value, page: 1 })}
         />
-        {filters.search && (
-          <button
-            onClick={() => onChange({ search: '', page: 1 })}
-            style={{
-              position: 'absolute',
-              right: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <X size={14} />
-          </button>
-        )}
       </div>
 
       {/* Status Filter */}
-      <div style={{ minWidth: '130px' }}>
+      <div style={{ minWidth: '120px' }}>
         <select
           className="input-control"
           value={filters.status || ''}
@@ -91,7 +60,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
       </div>
 
       {/* Priority Filter */}
-      <div style={{ minWidth: '130px' }}>
+      <div style={{ minWidth: '120px' }}>
         <select
           className="input-control"
           value={filters.priority || ''}
@@ -107,7 +76,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
 
       {/* Category Filter */}
       {categories.length > 0 && (
-        <div style={{ minWidth: '130px' }}>
+        <div style={{ minWidth: '120px' }}>
           <select
             className="input-control"
             value={filters.category || ''}
@@ -124,7 +93,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
       )}
 
       {/* Sort Field & Order */}
-      <div style={{ display: 'flex', gap: '6px', minWidth: '180px' }}>
+      <div style={{ display: 'flex', gap: '6px', minWidth: '160px' }}>
         <select
           className="input-control"
           value={filters.sortBy || 'createdAt'}
@@ -138,11 +107,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
 
         <button
           className="btn-secondary"
-          style={{ padding: '8px 12px' }}
           onClick={() => onChange({ order: filters.order === 'asc' ? 'desc' : 'asc' })}
           title={`Order: ${filters.order === 'asc' ? 'Ascending' : 'Descending'}`}
         >
-          <ArrowUpDown size={16} />
+          {filters.order === 'asc' ? '↑' : '↓'}
         </button>
       </div>
 
@@ -151,9 +119,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, categor
         <button
           onClick={clearFilters}
           className="btn-secondary"
-          style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--accent-rose)' }}
+          style={{ fontSize: '0.8rem', color: 'var(--accent-rose)' }}
         >
-          <X size={14} /> Clear
+          Reset
         </button>
       )}
     </div>
