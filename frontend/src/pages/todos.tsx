@@ -7,7 +7,6 @@ import { TodoCard } from '../components/TodoCard';
 import { TodoFormModal } from '../components/TodoFormModal';
 import { todoApi } from '../services/api';
 import { CreateTodoInput, Todo, TodoQueryParams, TodoSummaryStats } from '../types/todo';
-import { Plus, RefreshCw, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 
 export default function TodosPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -110,8 +109,8 @@ export default function TodosPage() {
   return (
     <>
       <Head>
-        <title>Ziptrrip Todo List - MPA Dashboard</title>
-        <meta name="description" content="Feature-rich React Multi-Page Todo Application for Ziptrrip Tech Assignment" />
+        <title>Todo Application</title>
+        <meta name="description" content="Todo Application" />
       </Head>
 
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -125,16 +124,16 @@ export default function TodosPage() {
                 Todos Overview
               </h1>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
-                Manage, filter, and track your tasks and subtasks efficiently.
+                Manage, filter, and track your tasks and subtasks.
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => fetchTodos()} className="btn-secondary" title="Refresh list">
-                <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                Refresh
               </button>
               <button onClick={handleOpenCreateModal} className="btn-primary">
-                <Plus size={18} /> New Todo
+                + New Todo
               </button>
             </div>
           </div>
@@ -155,18 +154,16 @@ export default function TodosPage() {
           {/* Todo Cards Grid */}
           {loading ? (
             <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <RefreshCw size={32} className="spin" style={{ marginBottom: '12px' }} />
               <div>Loading todos...</div>
             </div>
           ) : todos.length === 0 ? (
             <div className="card" style={{ padding: '60px', textAlign: 'center' }}>
-              <Inbox size={48} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
               <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '8px' }}>No Todos Found</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
                 No task matched your search filter criteria or database is empty.
               </p>
               <button onClick={handleOpenCreateModal} className="btn-primary">
-                <Plus size={16} /> Create Your First Todo
+                + Create Your First Todo
               </button>
             </div>
           ) : (
@@ -192,7 +189,7 @@ export default function TodosPage() {
                 className="btn-secondary"
                 style={{ padding: '8px 14px', opacity: pagination.page <= 1 ? 0.5 : 1 }}
               >
-                <ChevronLeft size={16} /> Previous
+                Previous
               </button>
 
               <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>
@@ -205,7 +202,7 @@ export default function TodosPage() {
                 className="btn-secondary"
                 style={{ padding: '8px 14px', opacity: pagination.page >= pagination.totalPages ? 0.5 : 1 }}
               >
-                Next <ChevronRight size={16} />
+                Next
               </button>
             </div>
           )}

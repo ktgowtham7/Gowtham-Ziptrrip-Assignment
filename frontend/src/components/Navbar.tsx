@@ -30,41 +30,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
           justifyContent: 'space-between',
         }}
       >
-        <Link href="/todos" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-            }}
-          >
-            ✓
-          </div>
-          <div>
-            <span style={{ fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
-              Ziptrrip Todo
-            </span>
-            <span
-              style={{
-                marginLeft: '8px',
-                fontSize: '0.7rem',
-                color: 'var(--text-subtle)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                fontWeight: 500,
-              }}
-            >
-              MPA
-            </span>
-          </div>
+        <Link href="/todos">
+          <span style={{ fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+            Todo
+          </span>
         </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -84,7 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
             style={{ fontSize: '0.775rem', padding: '6px 12px' }}
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
           >
-            {theme === 'dark' ? '☀ Light' : '🌙 Dark'}
+            {theme === 'dark' ? 'Light' : 'Dark'}
           </button>
         </div>
       </div>
