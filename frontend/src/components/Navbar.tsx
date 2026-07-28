@@ -17,32 +17,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
         zIndex: 50,
         borderBottom: '1px solid var(--border-color)',
         background: 'var(--bg-card)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
       }}
     >
       <div
         style={{
-          maxWidth: '1200px',
+          maxWidth: '1240px',
           margin: '0 auto',
-          padding: '14px 24px',
+          padding: '16px 28px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
-        <Link href="/todos">
-          <span style={{ fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+        <Link href="/todos" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-main)' }}>
             Todo
           </span>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Link href="/todos" className="btn-secondary" style={{ fontSize: '0.825rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link href="/todos" className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
             Todos
           </Link>
 
           {onOpenCreateModal && (
-            <button onClick={onOpenCreateModal} className="btn-primary" style={{ fontSize: '0.825rem' }}>
+            <button onClick={onOpenCreateModal} className="btn-primary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
               + New Todo
             </button>
           )}
@@ -50,7 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateModal }) => {
           <button
             onClick={toggleTheme}
             className="btn-secondary"
-            style={{ fontSize: '0.775rem', padding: '6px 12px' }}
+            style={{ fontSize: '0.8rem', padding: '8px 14px' }}
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
           >
             {theme === 'dark' ? 'Light' : 'Dark'}
