@@ -33,23 +33,23 @@ export const TodoCard: React.FC<TodoCardProps> = ({
     <div
       className="card"
       style={{
-        padding: '18px 20px',
+        padding: '20px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         position: 'relative',
-        opacity: isCompleted ? 0.75 : 1,
+        opacity: isCompleted ? 0.78 : 1,
       }}
     >
       <div>
-        {/* Top Header Row: Status, Priority & Category */}
+        {/* Top Badges & Checkbox */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input
               type="checkbox"
               checked={isCompleted}
               onChange={() => onStatusToggle(todo.id, todo.status)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#10b981' }}
+              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#34d399' }}
               title={`Mark as ${isCompleted ? 'Pending' : 'Completed'}`}
             />
             <span className={`badge badge-${todo.status}`}>
@@ -64,7 +64,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
             <span
               style={{
                 fontSize: '0.725rem',
-                padding: '2px 7px',
+                padding: '2px 8px',
                 borderRadius: '4px',
                 background: 'var(--bg-input)',
                 color: 'var(--text-muted)',
@@ -87,6 +87,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
               color: 'var(--text-main)',
               textDecoration: isCompleted ? 'line-through' : 'none',
               lineHeight: 1.4,
+              letterSpacing: '-0.01em',
             }}
           >
             {todo.title}
@@ -98,7 +99,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
             style={{
               fontSize: '0.85rem',
               color: 'var(--text-muted)',
-              marginBottom: '12px',
+              marginBottom: '14px',
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical' as any,
@@ -110,31 +111,10 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           </p>
         )}
 
-        {/* Tags */}
-        {todo.tags && todo.tags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px' }}>
-            {todo.tags.map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  fontSize: '0.7rem',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  background: 'var(--bg-input)',
-                  color: 'var(--text-muted)',
-                  border: '1px solid var(--border-color)',
-                }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Subtask Progress */}
+        {/* Subtask Progress Bar */}
         {totalSubtasks > 0 && (
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '5px', fontWeight: 500 }}>
               <span>Subtasks</span>
               <span>{completedSubtasks}/{totalSubtasks} ({subtaskProgress}%)</span>
             </div>
@@ -143,7 +123,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
                 style={{
                   height: '100%',
                   width: `${subtaskProgress}%`,
-                  background: subtaskProgress === 100 ? '#10b981' : '#3b82f6',
+                  background: subtaskProgress === 100 ? '#34d399' : '#3b82f6',
                   transition: 'width 0.2s ease',
                 }}
               />
@@ -156,14 +136,14 @@ export const TodoCard: React.FC<TodoCardProps> = ({
       <div
         style={{
           borderTop: '1px solid var(--border-color)',
-          paddingTop: '10px',
+          paddingTop: '12px',
           marginTop: '6px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}
       >
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
           {formattedDueDate ? `Due ${formattedDueDate}` : 'No due date'}
         </div>
 
@@ -171,7 +151,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           <button
             onClick={() => onEdit(todo)}
             className="btn-secondary"
-            style={{ padding: '4px 10px', fontSize: '0.775rem' }}
+            style={{ padding: '5px 10px', fontSize: '0.775rem' }}
           >
             Edit
           </button>
@@ -179,7 +159,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           <button
             onClick={() => onDelete(todo.id)}
             className="btn-danger"
-            style={{ padding: '4px 10px', fontSize: '0.775rem' }}
+            style={{ padding: '5px 10px', fontSize: '0.775rem' }}
           >
             Delete
           </button>
@@ -187,7 +167,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           <Link
             href={`/todo?id=${todo.id}`}
             className="btn-secondary"
-            style={{ padding: '4px 10px', fontSize: '0.775rem', color: 'var(--accent-blue)' }}
+            style={{ padding: '5px 12px', fontSize: '0.775rem', color: '#60a5fa' }}
           >
             Details →
           </Link>

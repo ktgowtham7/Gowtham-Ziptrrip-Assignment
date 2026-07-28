@@ -20,7 +20,6 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
   const [priority, setPriority] = useState<TodoPriority>('medium');
   const [category, setCategory] = useState('Work');
   const [dueDate, setDueDate] = useState('');
-  const [tagsInput, setTagsInput] = useState('');
   const [subtasks, setSubtasks] = useState<Array<{ title: string; completed: boolean }>>([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,7 +33,6 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
       setPriority(initialTodo.priority);
       setCategory(initialTodo.category || 'Work');
       setDueDate(initialTodo.dueDate ? initialTodo.dueDate.split('T')[0] : '');
-      setTagsInput(initialTodo.tags ? initialTodo.tags.join(', ') : '');
       setSubtasks(initialTodo.subtasks ? initialTodo.subtasks.map((s) => ({ title: s.title, completed: s.completed })) : []);
     } else {
       setTitle('');
@@ -43,7 +41,6 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
       setPriority('medium');
       setCategory('Work');
       setDueDate('');
-      setTagsInput('');
       setSubtasks([]);
     }
     setError('');
@@ -73,11 +70,6 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
     setError('');
 
     try {
-      const tags = tagsInput
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0);
-
       const formattedDueDate = dueDate ? new Date(dueDate).toISOString() : null;
 
       await onSubmit(
@@ -88,7 +80,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
           priority,
           category: category.trim() || 'General',
           dueDate: formattedDueDate,
-          tags,
+          tags: [],
           subtasks,
         },
         initialTodo?.id
@@ -126,7 +118,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
             <input
               type="text"
               className="input-control"
-              placeholder="e.g. Finish Tech Assignment"
+              placeholder="e.g. Complete Ziptrrip Tech Assignment"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -186,17 +178,6 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Tags (comma-separated)</label>
-            <input
-              type="text"
-              className="input-control"
-              placeholder="work, assignment, urgent"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-            />
           </div>
 
           {!initialTodo && (
