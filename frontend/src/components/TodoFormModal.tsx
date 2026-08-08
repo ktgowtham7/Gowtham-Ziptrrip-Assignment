@@ -13,8 +13,8 @@ const todoSchema = z.object({
   dueDate: z.string().optional(),
   subtasks: z.array(z.object({
     title: z.string().min(1, 'Subtask title is required'),
-    completed: z.boolean().default(false)
-  })).optional().default([]),
+    completed: z.boolean()
+  })),
 });
 
 type TodoFormValues = z.infer<typeof todoSchema>;
@@ -22,7 +22,7 @@ type TodoFormValues = z.infer<typeof todoSchema>;
 interface TodoFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (input: CreateTodoInput, editId?: string) => Promise<void>;
+  onSubmit: (input: CreateTodoInput, editId?: string) => Promise<void> | void;
   initialTodo?: Todo | null;
 }
 
