@@ -22,6 +22,7 @@ export class TodoRepository {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       tags: row.tags ? JSON.parse(row.tags) : [],
+      assignedTo: row.assignedTo || null,
       subtasks: subtasks.map((st) => ({
         id: st.id,
         todoId: st.todoId,
@@ -109,8 +110,8 @@ export class TodoRepository {
     const tags = JSON.stringify(input.tags || []);
     
     await dbRun(
-      `INSERT INTO todos (id, title, description, status, priority, category, dueDate, createdAt, updatedAt, tags)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO todos (id, title, description, status, priority, category, dueDate, createdAt, updatedAt, tags, assignedTo)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.title,
@@ -121,7 +122,8 @@ export class TodoRepository {
         input.dueDate || null,
         now,
         now,
-        tags
+        tags,
+        input.assignedTo || null
       ]
     );
 
@@ -149,7 +151,7 @@ export class TodoRepository {
     let updateClauses: string[] = ['updatedAt = ?'];
     let updateParams: any[] = [now];
 
-    const fields = ['title', 'description', 'status', 'priority', 'category', 'dueDate'];
+    const fields = ['title', 'description', 'status', 'priority', 'category', 'dueDate', 'assignedTo'];
     for (const field of fields) {
       if ((input as any)[field] !== undefined) {
         updateClauses.push(`${field} = ?`);

@@ -21,6 +21,7 @@ export interface Todo {
   updatedAt: string;
   tags: string[];
   subtasks?: SubTask[];
+  assignedTo?: string | null;
 }
 
 export interface CreateTodoInput {
@@ -32,6 +33,7 @@ export interface CreateTodoInput {
   dueDate?: string | null;
   tags?: string[];
   subtasks?: Array<{ title: string; completed?: boolean }>;
+  assignedTo?: string | null;
 }
 
 export interface UpdateTodoInput {
@@ -42,6 +44,7 @@ export interface UpdateTodoInput {
   category?: string;
   dueDate?: string | null;
   tags?: string[];
+  assignedTo?: string | null;
 }
 
 export interface TodoQueryParams {

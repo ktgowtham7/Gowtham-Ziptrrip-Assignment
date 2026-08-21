@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { CreateTodoInput, Todo, TodoPriority, TodoStatus } from '../types/todo';
 
+const TEAM_MEMBERS = ['Bhaskar', 'Gowtham', 'Ebi'];
+
 const todoSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
   description: z.string().optional(),
@@ -15,6 +17,7 @@ const todoSchema = z.object({
     title: z.string().min(1, 'Subtask title is required'),
     completed: z.boolean()
   })),
+  assignedTo: z.string().optional(),
 });
 
 type TodoFormValues = z.infer<typeof todoSchema>;
@@ -45,6 +48,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
       category: 'Work',
       dueDate: '',
       subtasks: [],
+      assignedTo: '',
     }
   });
 
@@ -65,6 +69,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
         category: initialTodo.category || 'Work',
         dueDate: initialTodo.dueDate ? initialTodo.dueDate.split('T')[0] : '',
         subtasks: initialTodo.subtasks ? initialTodo.subtasks.map(s => ({ title: s.title, completed: s.completed })) : [],
+        assignedTo: initialTodo.assignedTo || '',
       });
     } else {
       reset({
@@ -75,6 +80,7 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
         category: 'Work',
         dueDate: '',
         subtasks: [],
+        assignedTo: '',
       });
     }
     setError('');
@@ -90,7 +96,8 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
       await onSubmit({
         ...data,
         dueDate: formattedDueDate,
-        tags: []
+        tags: [],
+        assignedTo: data.assignedTo || null
       }, initialTodo?.id);
     } catch (err: any) {
       setError(err.response?.data?.error || err.message || 'Failed to save todo');
@@ -187,6 +194,18 @@ export const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 {...register('dueDate')}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-1">Assign To</label>
+            <select className="input-control" {...register('assignedTo')}>
+              <option value="">Unassigned (No one)</option>
+              {TEAM_MEMBERS.map((member) => (
+                <option key={member} value={member}>
+                  {member}
+                </option>
+              ))}
+            </select>
           </div>
 
           {!initialTodo && (

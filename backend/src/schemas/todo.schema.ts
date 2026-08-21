@@ -17,6 +17,7 @@ export const createTodoSchema = z.object({
     )
     .optional()
     .default([]),
+  assignedTo: z.string().nullable().optional().default(null),
 });
 
 export const updateTodoSchema = z.object({
@@ -27,6 +28,7 @@ export const updateTodoSchema = z.object({
   category: z.string().optional(),
   dueDate: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
+  assignedTo: z.string().nullable().optional(),
 });
 
 export const updateStatusSchema = z.object({

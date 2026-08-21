@@ -53,7 +53,8 @@ export const initDatabase = async (): Promise<void> => {
       dueDate TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL,
-      tags TEXT NOT NULL DEFAULT '[]'
+      tags TEXT NOT NULL DEFAULT '[]',
+      assignedTo TEXT
     );
   `);
 
@@ -73,6 +74,13 @@ export const initDatabase = async (): Promise<void> => {
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_todos_priority ON todos(priority);`);
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_todos_category ON todos(category);`);
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_subtasks_todoId ON subtasks(todoId);`);
+
+  // Migration: Add assignedTo column if it doesn't exist
+  try {
+    await dbRun(`ALTER TABLE todos ADD COLUMN assignedTo TEXT;`);
+  } catch (err) {
+    // Column already exists or table doesn't exist yet, ignore
+  }
 
   // Seed data if empty
   const countRow = await dbGet<{ count: number }>('SELECT COUNT(*) as count FROM todos');
@@ -94,6 +102,7 @@ export const initDatabase = async (): Promise<void> => {
         createdAt: now,
         updatedAt: now,
         tags: JSON.stringify(['ziptrrip', 'assignment', 'urgent']),
+        assignedTo: 'Bhaskar',
         subtasks: [
           { title: 'Check Express CRUD Endpoints', completed: 1 },
           { title: 'Verify SQLite database persistence', completed: 1 },
@@ -111,6 +120,7 @@ export const initDatabase = async (): Promise<void> => {
         createdAt: now,
         updatedAt: now,
         tags: JSON.stringify(['postman', 'api', 'testing']),
+        assignedTo: 'Gowtham',
         subtasks: [
           { title: 'Add GET, POST, PUT, PATCH, DELETE requests', completed: 0 },
           { title: 'Add query parameter documentation', completed: 0 },
@@ -127,6 +137,7 @@ export const initDatabase = async (): Promise<void> => {
         createdAt: now,
         updatedAt: now,
         tags: JSON.stringify(['frontend', 'react', 'mpa']),
+        assignedTo: 'Ebi',
         subtasks: [
           { title: 'Create /todos dashboard view', completed: 1 },
           { title: 'Create /todo?id= view', completed: 1 },
@@ -136,8 +147,8 @@ export const initDatabase = async (): Promise<void> => {
 
     for (const todo of sampleTodos) {
       await dbRun(
-        `INSERT INTO todos (id, title, description, status, priority, category, dueDate, createdAt, updatedAt, tags)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO todos (id, title, description, status, priority, category, dueDate, createdAt, updatedAt, tags, assignedTo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           todo.id,
           todo.title,
@@ -149,6 +160,7 @@ export const initDatabase = async (): Promise<void> => {
           todo.createdAt,
           todo.updatedAt,
           todo.tags,
+          todo.assignedTo,
         ]
       );
 

@@ -78,6 +78,13 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           </p>
         )}
 
+        {todo.assignedTo && (
+          <div className="inline-flex items-center gap-1.5 text-xs text-textMuted mb-4 bg-input px-2.5 py-1 rounded-lg border border-borderBase shadow-sm">
+            <span className="text-[11px]">👤</span>
+            <span className="font-medium text-textMain">Assigned: <strong className="font-semibold">{todo.assignedTo}</strong></span>
+          </div>
+        )}
+
         {totalSubtasks > 0 && (
           <div className="mb-4">
             <div className="flex justify-between text-xs text-textMuted font-semibold mb-2">

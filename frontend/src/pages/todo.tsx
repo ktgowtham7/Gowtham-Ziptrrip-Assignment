@@ -220,7 +220,7 @@ export default function SingleTodoPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <div className="p-4 rounded-xl bg-input border border-borderBase">
                   <span className="text-xs text-textMuted block mb-1 font-semibold">Created At</span>
                   <div className="text-sm font-bold flex items-center gap-2">
@@ -239,6 +239,13 @@ export default function SingleTodoPage() {
                   <span className="text-xs text-textMuted block mb-1 font-semibold">Target Due Date</span>
                   <div className={`text-sm font-bold flex items-center gap-2 ${todo.dueDate ? 'text-blue-400' : 'text-textMuted'}`}>
                     <Calendar size={14} /> {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'None'}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-input border border-borderBase">
+                  <span className="text-xs text-textMuted block mb-1 font-semibold">Assigned To</span>
+                  <div className="text-sm font-bold flex items-center gap-2 text-accent-blue">
+                    <span>👤</span> {todo.assignedTo || 'Unassigned'}
                   </div>
                 </div>
               </div>
